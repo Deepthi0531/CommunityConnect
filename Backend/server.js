@@ -7,11 +7,9 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// Database connection
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
@@ -27,12 +25,10 @@ db.connect(err => {
   }
 });
 
-// Test route
 app.get("/", (req, res) => {
   res.send("CommunityConnect Backend Running ✅");
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log("Server running on port ${PORT}");
 });
