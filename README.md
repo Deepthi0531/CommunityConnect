@@ -16,7 +16,7 @@ This portal provides a **centralized and organized platform** where users can po
 
 ## 🛠️ Tech Stack
 - **Frontend:** HTML, CSS, JavaScript, Bootstrap
-- **Backend:** PHP (or Node.js alternative)
+- **Backend:** Node.js
 - **Database:** MySQL
 - **API Integration:** Google Maps API (location & distance)
 - **Hosting:** Local  → Later deploy on InfinityFree / webhost / Vercel
@@ -25,7 +25,7 @@ This portal provides a **centralized and organized platform** where users can po
 
 ### Software Requirements
 - **OS:** Windows 10/11
-- **Programming Language:** PHP (backend) / HTML, CSS, JS, Bootstrap (frontend)
+- **Programming Language:** Node.js (backend) / HTML, CSS, JS, Bootstrap (frontend)
 - **Database:** MySQL
 - **Server:** XAMPP / WAMP
 - **APIs:** Google Maps API
