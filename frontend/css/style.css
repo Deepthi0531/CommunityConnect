@@ -1,0 +1,6 @@
+.hero-section {
+  background: url("../assets/Community.jpg") no-repeat center center/cover;
+  color: rgb(246, 245, 244);
+  padding: 200px 200px;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
+}
