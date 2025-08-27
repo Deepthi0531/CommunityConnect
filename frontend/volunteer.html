@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Register as Volunteer | CommunityConnect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+  <!-- Custom CSS -->
+  <style>
+    :root{
+      --cc-bg: #0f172a;
+      --cc-accent: #0d6efd;
+      --cc-soft: #f8fafc;
+      --cc-muted: #6c757d;
+    }
+    body { background: #ffffff; }
+    .navbar { box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+    .hero-section{
+      background: linear-gradient(135deg, #173426 0%, #1f9c77 100%);
+      color:#fff; padding: 48px 0; text-align:center;
+    }
+    .hero-section h1{ font-weight: 700; }
+    .page-card{
+      background: #fff;
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 1rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,.06);
+    }
+    .section-title{ font-weight: 700; }
+    .form-label{ font-weight: 600; }
+    .hint{ font-size: .9rem; color: var(--cc-muted); }
+    .map-wrap{
+      border: 1px solid rgba(0,0,0,.08);
+      border-radius: .75rem; overflow: hidden;
+      background: var(--cc-soft);
+    }
+    #map{ width:100%; height: 300px; }
+    footer{ margin-top: 48px; }
+  </style>
+
+  <!-- Google Maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+    <a class="navbar-brand" href="index.html">CommunityConnect</a>
+    <div class="ms-auto">
+            <a href="index.html" class="btn btn-outline-light">Home</a>
+      <a href="login.html" class="btn btn-outline-light ms-2">Login</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero-section">
+    <div class="container">
+      <h1>Volunteer Registration</h1>
+      <p class="mb-0">Join the community effort. Register as a volunteer today!</p>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="container my-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="page-card p-4 p-md-5">
+          <h2 class="section-title mb-4">Your Details</h2>
+
+          <div id="formAlert" class="alert d-none" role="alert"></div>
+
+          <form id="volunteerForm" novalidate>
+            <div class="row g-4">
+
+              <div class="col-md-6">
+                <label class="form-label required" for="name">Full Name</label>
+                <input class="form-control" id="name" name="name" type="text" required placeholder="Your Name">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label required" for="email">Email</label>
+                <input class="form-control" id="email" name="email" type="email" required placeholder="you@example.com">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label required" for="phone">Phone</label>
+                <input class="form-control" id="phone" name="phone" type="text" required placeholder="Your Phone Number">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label required" for="availability">Availability</label>
+                <select class="form-select" id="availability" name="availability" required>
+                  <option value="">Select</option>
+                  <option value="yes">Available</option>
+                  <option value="no">Not Available</option>
+                </select>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label required" for="skills">Skills</label>
+                <textarea class="form-control" id="skills" name="skills" rows="4" required
+                  placeholder="E.g., First Aid, Cooking, Transport, Nursing..."></textarea>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Location (Optional)</label>
+                <div class="map-wrap"><div id="map"></div></div>
+                <small class="hint">Click on the map to drop a marker. This helps us match you with nearby requests.</small>
+                <input type="hidden" id="latitude" name="latitude" />
+                <input type="hidden" id="longitude" name="longitude" />
+              </div>
+
+              <div class="col-12 d-flex gap-3 mt-3">
+                <button type="submit" class="btn btn-success">Register</button>
+                <button type="reset" class="btn btn-outline-secondary">Reset</button>
+              </div>
+
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-dark text-white text-center p-3">
+    &copy; 2025 CommunityConnect | Local Help Portal
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Page Script -->
+  <script>
+    let map, marker;
+
+    function initMap() {
+      const start = { lat: 12.2958, lng: 76.6394 }; // Mysuru default
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: start,
+        zoom: 13,
+      });
+      marker = new google.maps.Marker({ position: start, map: map, draggable: true });
+      setLatLng(start.lat, start.lng);
+
+      map.addListener("click", (e) => { placeMarker(e.latLng); });
+      marker.addListener("dragend", () => {
+        const pos = marker.getPosition();
+        setLatLng(pos.lat(), pos.lng());
+      });
+    }
+
+    function placeMarker(latLng){
+      marker.setPosition(latLng);
+      setLatLng(latLng.lat(), latLng.lng());
+    }
+    function setLatLng(lat, lng){
+      document.getElementById("latitude").value = lat.toFixed(6);
+      document.getElementById("longitude").value = lng.toFixed(6);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initMap();
+      const form = document.getElementById("volunteerForm");
+      const alertBox = document.getElementById("formAlert");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (!form.checkValidity()) {
+          showAlert("Please fill all required fields.", "danger");
+          form.classList.add("was-validated");
+          return;
+        }
+
+        const payload = {
+          name: form.name.value.trim(),
+          email: form.email.value.trim(),
+          phone: form.phone.value.trim(),
+          availability: form.availability.value,
+          skills: form.skills.value.trim(),
+          latitude: form.latitude.value,
+          longitude: form.longitude.value,
+          timestamp: new Date().toISOString(),
+        };
+
+        console.log("Volunteer Registered:", payload);
+        showAlert("You have been registered as a volunteer (demo). Hook this to backend.", "success");
+        form.reset();
+      });
+
+      function showAlert(message, type){
+        if(!message){
+          alertBox.className = "alert d-none";
+          alertBox.textContent = "";
+          return;
+        }
+        alertBox.className = "alert alert-" + type;
+        alertBox.textContent = message;
+      }
+    });
+  </script>
+</body>
+</html>
