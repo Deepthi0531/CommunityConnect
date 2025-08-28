@@ -1,18 +1,20 @@
-// config/db.js
+// Backend/config/db.js
 const mysql = require("mysql2");
 
-// Create a connection pool for better performance
-const pool = mysql.createPool({
-  host: "localhost",       // Your DB host (use RDS endpoint if AWS)
-  user: "root",            // Your MySQL username
-  password: "your_password", // Your MySQL password
-  database: "communityconnect", // Your database name
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
+const db = mysql.createConnection({
+  host: "localhost",   // your DB host
+  user: "root",        // your MySQL username
+  password: "Deepti@02!",        // your MySQL password
+  database: "communityconnect"  // your database name
 });
 
-// Export promise-based pool (so we can use async/await)
-const db = pool.promise();
+// connect to database
+db.connect((err) => {
+  if (err) {
+    console.error("Database connection failed: ", err);
+    return;
+  }
+  console.log("✅ Connected to MySQL Database");
+});
 
 module.exports = db;
