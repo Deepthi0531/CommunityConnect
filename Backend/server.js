@@ -2,6 +2,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 require("dotenv").config();
+const userRoutes = require("./routes/userRoutes");
+const path = require('path');
 
 const db = require("./config/db");
 
@@ -11,17 +13,15 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(bodyParser.json());
 
-db.connect(err => {
-  if (err) {
-    console.error("Database connection failed:", err);
-  } else {
-    console.log("Connected to MySQL database.");
-  }
-});
+// Serve static files from the 'frontend' directory
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
-// Test route
-app.get("/", (req, res) => {
-  res.send("CommunityConnect Backend Running ✅");
+// API routes
+app.use("/api/users", userRoutes);
+
+// Catch-all to serve index.html for any other GET request
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
 
 app.listen(PORT, () => {
