@@ -6,7 +6,22 @@
   <title>CommunityConnect - Local Help Portal</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+  
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-o9N1j6/4LN8SpFJn2xRMwzAPTuiGlR9fr5GP0eb7LfU="
+    crossorigin=""
+  />
+  
+  <style>
+    /* Set height for map container */
+    #map {
+      width: 100%;
+      height: 400px;
+    }
+  </style>
 </head>
 <body>
 
@@ -14,7 +29,6 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
     <a class="navbar-brand fw-bold" href="index.html">CommunityConnect</a>
     <div class="ms-auto">
-      
       <a href="login.html" class="btn btn-outline-light ms-2">Login</a>
     </div>
   </nav>
@@ -55,7 +69,7 @@
   <!-- Map & Requests -->
   <div class="container my-5">
     <h2 class="text-center">Nearby Requests</h2>
-    <div id="map" style="width:100%; height:400px;" class="rounded shadow"></div>
+    <div id="map" class="rounded shadow"></div>
     <ul id="requests" class="list-group mt-3 shadow-sm"></ul>
   </div>
 
@@ -63,6 +77,35 @@
   <footer class="bg-dark text-white text-center p-3 mt-5">
     &copy; 2025 CommunityConnect | Local Help Portal
   </footer>
+
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-o9N1j6/4LN8SpFJn2xRMwzAPTuiGlR9fr5GP0eb7LfU="
+    crossorigin=""
+  ></script>
+
+  <!-- Initialize Leaflet Map -->
+  <script>
+    // Function to initialize map
+    function initMap() {
+      // Set view to some default location and zoom (e.g. center of India)
+      var map = L.map('map').setView([20.5937, 78.9629], 5);
+
+      // Add OpenStreetMap tiles layer with attribution
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Example marker in the center; you can dynamically add markers later
+      L.marker([20.5937, 78.9629]).addTo(map)
+      .bindPopup('CommunityConnect').openPopup();
+    }
+
+    // Initialize map after DOM content is loaded
+    document.addEventListener('DOMContentLoaded', initMap);
+  </script>
 
   <script src="js/script.js"></script>
 </body>
