@@ -2,7 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 require("dotenv").config();
-const userRoutes = require("./routes/userRoutes");
+const userRoutes = require('./routes/userRoutes');
 const path = require('path');
 
 const db = require("./config/db");
@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname, '..', 'frontend')));
 app.use("/api/users", userRoutes);
 
 // Catch-all to serve index.html for any other GET request
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
 
