@@ -30,3 +30,6 @@ app.listen(PORT, () => {
 
 const requestRoutes = require("./routes/requests");
 app.use("/api/requests", requestRoutes);
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
