@@ -27,3 +27,6 @@ app.get(/.*/, (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+const requestRoutes = require("./routes/requests");
+app.use("/api/requests", requestRoutes);
