@@ -5,72 +5,45 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <title>Create Help Request | CommunityConnect</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <!-- Bootstrap -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-  />
-  <!-- Custom CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+  <!-- Custom CSS (similar tone to your existing style.css) -->
   <style>
-    :root {
-      --cc-bg: #0f172a; /* dark slate */
-      --cc-accent: #0d6efd; /* bootstrap primary */
-      --cc-soft: #f8fafc; /* light surface */
+    :root{
+      --cc-bg: #0f172a;          /* dark slate */
+      --cc-accent: #0d6efd;      /* bootstrap primary */
+      --cc-soft: #f8fafc;        /* light surface */
       --cc-muted: #6c757d;
     }
-    body {
-      background: #ffffff;
-    }
-    .navbar {
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    }
-    .hero-section {
+    body { background: #ffffff; }
+    .navbar { box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+    .hero-section{
       background: linear-gradient(135deg, #501221 0%, #7f69a2 100%);
       color: #fff;
       padding: 48px 0;
       text-align: center;
     }
-    .hero-section h1 {
-      font-weight: 700;
-      letter-spacing: 0.2px;
-    }
-    .page-card {
+    .hero-section h1{ font-weight: 700; letter-spacing: .2px; }
+    .page-card{
       background: #fff;
       border: 1px solid rgba(0, 0, 0, 0.06);
       border-radius: 1rem;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 10px 30px rgba(0,0,0,.06);
     }
-    .section-title {
-      font-weight: 700;
-    }
-    .form-label {
-      font-weight: 600;
-    }
-    .hint {
-      font-size: 0.9rem;
-      color: var(--cc-muted);
-    }
-    .map-wrap {
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      border-radius: 0.75rem;
-      overflow: hidden;
+    .section-title{ font-weight: 700; }
+    .form-label{ font-weight: 600; }
+    .hint{ font-size: .9rem; color: var(--cc-muted); }
+    .map-wrap{
+      border: 1px solid rgba(0,0,0,.08);
+      border-radius: .75rem; overflow: hidden;
       background: var(--cc-soft);
     }
-    #map {
-      width: 100%;
-      height: 380px;
-      border-radius: 0.75rem;
-    }
-    .badge-legend .badge {
-      font-size: 0.8rem;
-    }
-    .required::after {
-      content: " *";
-      color: #dc3545;
-    }
-    footer {
-      margin-top: 48px;
-    }
+    #map{ width:100%; height: 380px; }
+    .badge-legend .badge{ font-size: .8rem; }
+    .required::after{ content:" *"; color:#dc3545; }
+    footer{ margin-top: 48px; }
   </style>
 </head>
 <body>
@@ -106,7 +79,7 @@
           <!-- Alert placeholder -->
           <div id="formAlert" class="alert d-none" role="alert"></div>
 
-          <form id="helpRequestForm" novalidate>
+          <form id="helpRequestForm" enctype="multipart/form-data" novalidate>
             <div class="row g-4">
               <div class="col-md-8">
                 <label class="form-label required" for="title">Title</label>
@@ -131,6 +104,14 @@
                   <option>Rescue</option>
                   <option>Lost &amp; Found</option>
                   <option>Other</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label required" for="urgency">Urgency</label>
+                <select class="form-select" id="urgency" name="urgency" required>
+                  <option value="normal">Normal</option>
+                  <option value="emergency">Emergency</option>
                 </select>
               </div>
 
@@ -163,13 +144,8 @@
 
               <div class="col-md-6">
                 <label class="form-label" for="address">Address / Landmark</label>
-                <input
-                  class="form-control"
-                  id="address"
-                  name="address"
-                  type="text"
-                  placeholder="Optional: Hospital name, street, area"
-                />
+                <input class="form-control" id="address" name="address" type="text"
+                       placeholder="Optional: Hospital name, street, area">
               </div>
 
               <div class="col-12">
@@ -198,6 +174,7 @@
                   Reset
                 </button>
               </div>
+
             </div>
           </form>
         </div>
@@ -210,81 +187,79 @@
     &copy; 2025 CommunityConnect | Local Help Portal
   </footer>
 
-  <!-- Bootstrap JS (optional, for nicer behavior) -->
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Leaflet JS for OpenStreetMap -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    ></script>
 
   <!-- Page Script -->
   <script>
     let map, marker;
 
-    function setLatLng(lat, lng) {
-      document.getElementById("latitude").value = lat.toFixed(6);
-      document.getElementById("longitude").value = lng.toFixed(6);
+    function initMap() {
+      // Default center (Mysuru-ish); adjust as needed
+      const start = { lat: 12.2958, lng: 76.6394 };
+
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: start,
+        zoom: 13,
+        streetViewControl: false,
+        mapTypeControl: false,
+      });
+
+      // Place initial marker (optional)
+      marker = new google.maps.Marker({
+        position: start,
+        map: map,
+        draggable: true,
+      });
+
+      // Initialize hidden fields
+      setLatLng(start.lat, start.lng);
+
+      // Clicking anywhere sets/updates marker + hidden inputs
+      map.addListener("click", (e) => {
+        placeMarker(e.latLng);
+      });
+
+      // Drag end updates coords
+      marker.addListener("dragend", () => {
+        const pos = marker.getPosition();
+        setLatLng(pos.lat(), pos.lng());
+      });
     }
 
-    function placeMarker(latLng) {
+    function placeMarker(latLng){
       marker.setPosition(latLng);
       setLatLng(latLng.lat(), latLng.lng());
     }
 
-    async function initMap() {
-  // Import the AdvancedMarkerElement class
-  const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+    function setLatLng(lat, lng){
+      document.getElementById("latitude").value = lat.toFixed(6);
+      document.getElementById("longitude").value = lng.toFixed(6);
+    }
 
-  const fallback = { lat: 12.9716, lng: 77.5946 };
-
-  function createMap(center) {
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: center,
-      zoom: 14,
-      streetViewControl: false,
-      mapTypeControl: false,
-    });
-
-    marker = new AdvancedMarkerElement({
-      position: center,
-      map,
-      draggable: true,
-    });
-
-    setLatLng(center.lat, center.lng);
-
-    map.addListener("click", (e) => {
-      marker.position = e.latLng;
-      setLatLng(e.latLng.lat(), e.latLng.lng());
-    });
-
-    marker.addEventListener("dragend", () => {
-      const pos = marker.position;
-      setLatLng(pos.lat(), pos.lng());
-    });
-  }
-
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => createMap({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      }),
-      () => createMap(fallback)
-    );
-  } else {
-    createMap(fallback);
-  }
-}
-
+    // Simple client-side handling
     document.addEventListener("DOMContentLoaded", () => {
       initMap();
 
-      const form = document.getElementById("helpRequestForm");
-      const alertBox = document.getElementById("formAlert");
+      const category = document.getElementById('category');
+      const photoUploadContainer = document.getElementById('photoUploadContainer');
+      const form = document.getElementById('helpRequestForm');
+      const alertBox = document.getElementById('formAlert');
 
-      form.addEventListener("submit", (e) => {
+      category.addEventListener('change', () => {
+        photoUploadContainer.style.display = category.value === 'Lost & Found' ? 'block' : 'none';
+      });
+
+      form.addEventListener('submit', (e) => {
         e.preventDefault();
 
         if (!form.checkValidity()) {
-          showAlert("Please fill all required fields.", "danger");
-          form.classList.add("was-validated");
+          showAlert('Please fill all required fields.', 'danger');
+          form.classList.add('was-validated');
           return;
         }
 
@@ -300,30 +275,43 @@
           timestamp: new Date().toISOString(),
         };
 
-        // TODO: Implement backend API call here
+        // TODO: Replace this with your actual backend call (PHP/Node API)
+        // Example with fetch:
+        // fetch('/api/requests/create', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+        //   .then(res => res.json())
+        //   .then(data => { ... })
+
         console.log("Submitting request:", payload);
-        showAlert(
-          "Your request has been submitted (demo). Wire this to your backend next.",
-          "success"
-        );
+        showAlert("Your request has been submitted (demo). Wire this to your backend next.", "success");
         form.reset();
+        // keep marker position as-is; if you want to reset, re-center:
+        // map.setCenter({lat: 12.2958, lng: 76.6394});
+        // marker.setPosition({lat: 12.2958, lng: 76.6394});
       });
 
       document.getElementById("resetBtn").addEventListener("click", () => {
-        showAlert("", "");
+        showAlert("", ""); // clear
         form.classList.remove("was-validated");
       });
 
-      function showAlert(message, type) {
-        if (!message) {
+      function showAlert(message, type){
+        if(!message){
           alertBox.className = "alert d-none";
           alertBox.textContent = "";
           return;
         }
-        alertBox.className = "alert alert-" + type;
+        alertBox.className = `alert alert-${type}`;
         alertBox.textContent = message;
       }
     });
+    fetch('http://localhost:5000/api/requests/create', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer ' + localStorage.getItem('token')
+  },
+  body: formData,
+});
+
   </script>
   <script
     async
