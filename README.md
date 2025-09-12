@@ -19,7 +19,7 @@ This portal provides a **centralized and organized platform** where users can po
 - **Backend:** Node.js
 - **Database:** MySQL
 - **API Integration:** Google Maps API (location & distance)
-- **Hosting:** Local  → Later deploy on InfinityFree / webhost / Vercel
+- **Hosting:** Local
 
 ## 🖥️ Requirements
 
