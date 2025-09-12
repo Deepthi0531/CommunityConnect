@@ -20,7 +20,7 @@ const Request = {
         requestData.latitude,
         requestData.longitude,
         requestData.status || "pending",
-        requestData.timestamp || new Date(),
+        // requestData.timestamp || new Date(),
         requestData.image_url || null,
         requestData.user_id || null,
       ],
