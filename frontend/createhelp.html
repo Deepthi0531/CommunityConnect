@@ -316,39 +316,40 @@ if (navigator.geolocation) {
       });
 
       form.addEventListener('submit', (e) => {
-        e.preventDefault();
+  e.preventDefault();
 
-        if (!form.checkValidity()) {
-          showAlert('Please fill all required fields.', 'danger');
-          form.classList.add('was-validated');
-          return;
+  if (!form.checkValidity()) {
+    showAlert('Please fill all required fields.', 'danger');
+    form.classList.add('was-validated');
+    return;
+  }
+
+  const formData = new FormData(form);
+  const token = localStorage.getItem('token'); // Get the JWT token from storage
+
+  fetch('http://localhost:5000/api/requests/create', {
+    method: 'POST',
+    headers: {
+      ...(token && { 'Authorization': `Bearer ${token}` }) // Only set if token present
+    },
+    body: formData,
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.message) {
+        showAlert(data.message, data.message.toLowerCase().includes('success') ? 'success' : 'danger');
+        if (data.message.toLowerCase().includes('success')) {
+          form.reset();
+          marker.setLatLng([12.9716, 77.5946]);
+          setLatLng(marker.getLatLng());
         }
+      }
+    })
+    .catch(() => {
+      showAlert('Submit failed. Please try again later.', 'danger');
+    });
+});
 
-        const formData = new FormData(form);
-
-        fetch('http://localhost:5000/api/requests/create', {
-          method: 'POST',
-          headers: {
-            // Optionally add Authorization header if needed
-          },
-          body: formData,
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.message) {
-              showAlert(data.message, data.message.toLowerCase().includes('success') ? 'success' : 'danger');
-              if (data.message.toLowerCase().includes('success')) {
-                form.reset();
-                // Optionally reset map marker to default if you want
-                marker.setLatLng([12.9716, 77.5946]);
-                setLatLng(marker.getLatLng());
-              }
-            }
-          })
-          .catch(() => {
-            showAlert('Submit failed. Please try again later.', 'danger');
-          });
-      });
 
       document.getElementById('resetBtn').addEventListener('click', () => {
         showAlert('', '');
@@ -368,14 +369,6 @@ if (navigator.geolocation) {
         alertBox.textContent = message;
       }
     });
-//     const formData = new FormData(form);
-//     fetch('http://localhost:5000/api/requests/create', {
-//   method: 'POST',
-//   headers: {
-//     'Authorization': 'Bearer ' + localStorage.getItem('token')
-//   },
-//   body: formData,
-// });
 
   </script>
 </body>

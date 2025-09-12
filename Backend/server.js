@@ -34,6 +34,5 @@ app.use("/api/requests", requestRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
-// Serve uploads folder statically
 
 // ... your other middleware and routes
