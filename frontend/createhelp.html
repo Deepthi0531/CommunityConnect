@@ -348,19 +348,7 @@
         alertBox.textContent = message;
       }
     });
-   Request.create(newRequest, (err, result) => {
-  if (err) {
-    console.error("DB Error:", err);
-    // Remove uploaded file if db save failed
-    if (req.file) {
-      fs.unlink(path.join(__dirname, "..", "uploads", req.file.filename), () => {});
-    }
-    return res.status(500).json({ message: "Error creating request", error: err.message });
-  }
-
-  // Your success response code here
-  res.status(201).json({ message: "Request created successfully", requestId: result.insertId });
-});
+   
 
 
   </script>
