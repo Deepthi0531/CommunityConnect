@@ -33,11 +33,6 @@ app.use("/api/requests", requestRoutes);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// const express = require("express");
-// const path = require("path");
-// const app = express();
 
-// Serve uploads folder statically
-// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ... your other middleware and routes

@@ -247,19 +247,40 @@
     let map, marker;
 
     function initMap() {
-      const startCoords = [12.9716, 77.5946]; // Bangalore default location
-
-      // Initialize map
-      map = L.map('map').setView(startCoords, 13);
+      // Default to Bangalore in case location fails
+let startCoords = [12.9716, 77.5946];
+const map = L.map('map').setView(startCoords, 13);
 
       // Add OpenStreetMap tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
+        attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19,
       }).addTo(map);
 
       // Add draggable marker at startCoords
-      marker = L.marker(startCoords, { draggable: true }).addTo(map);
+      let marker = L.marker(startCoords, { draggable: true }).addTo(map);
+
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      // Success → update with live location
+      startCoords = [
+        position.coords.latitude,
+        position.coords.longitude
+      ];
+      console.log("Live location:", startCoords);
+    },
+    (error) => {
+      // Error → keep default
+      console.error("Error fetching location:", error.message);
+    }
+  );
+} else {
+  console.error("Geolocation is not supported by this browser.");
+}
+
+      // Initialize map
+     
 
       // Update lat/lng inputs with initial position
       setLatLng(marker.getLatLng());
@@ -348,8 +369,6 @@
         alertBox.textContent = message;
       }
     });
-   
-
 
   </script>
 </body>
