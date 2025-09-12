@@ -2,57 +2,99 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <title>Create Help Request | CommunityConnect</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Bootstrap -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
 
-  <!-- Custom CSS (similar tone to your existing style.css) -->
+  <!-- Leaflet CSS for OpenStreetMap -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+  <!-- Custom CSS -->
   <style>
-    :root{
-      --cc-bg: #0f172a;          /* dark slate */
-      --cc-accent: #0d6efd;      /* bootstrap primary */
-      --cc-soft: #f8fafc;        /* light surface */
+    :root {
+      --cc-bg: #0f172a;
+      --cc-accent: #0d6efd;
+      --cc-soft: #f8fafc;
       --cc-muted: #6c757d;
     }
-    body { background: #ffffff; }
-    .navbar { box-shadow: 0 2px 10px rgba(0,0,0,.08); }
-    .hero-section{
+
+    body {
+      background: #ffffff;
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .navbar {
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .hero-section {
       background: linear-gradient(135deg, #501221 0%, #7f69a2 100%);
       color: #fff;
       padding: 48px 0;
       text-align: center;
     }
-    .hero-section h1{ font-weight: 700; letter-spacing: .2px; }
-    .page-card{
+
+    .hero-section h1 {
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .page-card {
       background: #fff;
       border: 1px solid rgba(0, 0, 0, 0.06);
       border-radius: 1rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,.06);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      padding: 1.5rem;
     }
-    .section-title{ font-weight: 700; }
-    .form-label{ font-weight: 600; }
-    .hint{ font-size: .9rem; color: var(--cc-muted); }
-    .map-wrap{
-      border: 1px solid rgba(0,0,0,.08);
-      border-radius: .75rem; overflow: hidden;
+
+    .section-title {
+      font-weight: 700;
+    }
+
+    .form-label {
+      font-weight: 600;
+    }
+
+    .hint {
+      font-size: 0.9rem;
+      color: var(--cc-muted);
+    }
+
+    .map-wrap {
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 0.75rem;
+      overflow: hidden;
       background: var(--cc-soft);
     }
-    #map{ width:100%; height: 380px; }
-    .badge-legend .badge{ font-size: .8rem; }
-    .required::after{ content:" *"; color:#dc3545; }
-    footer{ margin-top: 48px; }
+
+    #map {
+      width: 100%;
+      height: 380px;
+    }
+
+    .badge-legend .badge {
+      font-size: 0.8rem;
+    }
+
+    .required::after {
+      content: " *";
+      color: #dc3545;
+    }
+
+    footer {
+      margin-top: 48px;
+    }
   </style>
 </head>
 <body>
+
   <!-- Nav -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-    <img src="favicon.ico" alt="Logo" width="50" height="50" />
-    <span style="margin-left: 10px; font-size: 20px; font-weight: bold"
-      >Community Connect</span
-    >
+    <a class="navbar-brand" href="index.html">CommunityConnect</a>
     <div class="ms-auto d-flex gap-2">
       <a href="index.html" class="btn btn-outline-light">Home</a>
       <a href="login.html" class="btn btn-outline-light">Login</a>
@@ -63,9 +105,7 @@
   <header class="hero-section">
     <div class="container">
       <h1>Create Help Request</h1>
-      <p class="mb-0">
-        Post a request so nearby volunteers can find and assist you quickly.
-      </p>
+      <p class="mb-0">Post a request so nearby volunteers can find and assist you quickly.</p>
     </div>
   </header>
 
@@ -81,6 +121,7 @@
 
           <form id="helpRequestForm" enctype="multipart/form-data" novalidate>
             <div class="row g-4">
+
               <div class="col-md-8">
                 <label class="form-label required" for="title">Title</label>
                 <input
@@ -144,8 +185,20 @@
 
               <div class="col-md-6">
                 <label class="form-label" for="address">Address / Landmark</label>
-                <input class="form-control" id="address" name="address" type="text"
-                       placeholder="Optional: Hospital name, street, area">
+                <input
+                  class="form-control"
+                  id="address"
+                  name="address"
+                  type="text"
+                  placeholder="Optional: Hospital name, street, area"
+                />
+              </div>
+
+              <!-- Image upload shown only for Lost & Found -->
+              <div class="col-12" id="photoUploadContainer" style="display:none;">
+                <label class="form-label" for="photo">Upload Photo (Lost &amp; Found)</label>
+                <input class="form-control" type="file" id="photo" name="photo" accept="image/*" />
+                <div class="hint mt-1">Add a clear picture to help locate the lost item or pet.</div>
               </div>
 
               <div class="col-12">
@@ -153,26 +206,21 @@
                 <div class="map-wrap">
                   <div id="map"></div>
                 </div>
-                <div
-                  class="d-flex align-items-center justify-content-between mt-2"
-                >
-                  <small class="hint">
-                    Click the map to place/move the pin. Latitude and longitude
-                    are auto-filled.
-                  </small>
+                <div class="d-flex align-items-center justify-content-between mt-2">
+                  <small class="hint">Click on the map to drop/move the pin. Latitude and longitude will be auto-filled.</small>
                   <div class="badge-legend">
                     <span class="badge bg-primary">Request Location</span>
                   </div>
                 </div>
-                <input type="hidden" id="latitude" name="latitude" />
-                <input type="hidden" id="longitude" name="longitude" />
               </div>
+
+              <!-- Hidden fields for lat/lng -->
+              <input type="hidden" id="latitude" name="latitude" />
+              <input type="hidden" id="longitude" name="longitude" />
 
               <div class="col-12 d-flex gap-3 mt-2">
                 <button type="submit" class="btn btn-primary">Submit Request</button>
-                <button type="reset" class="btn btn-outline-secondary" id="resetBtn">
-                  Reset
-                </button>
+                <button type="reset" class="btn btn-outline-secondary" id="resetBtn">Reset</button>
               </div>
 
             </div>
@@ -199,50 +247,63 @@
     let map, marker;
 
     function initMap() {
-      // Default center (Mysuru-ish); adjust as needed
-      const start = { lat: 12.2958, lng: 76.6394 };
+      // Default to Bangalore in case location fails
+let startCoords = [12.9716, 77.5946];
+const map = L.map('map').setView(startCoords, 13);
 
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: start,
-        zoom: 13,
-        streetViewControl: false,
-        mapTypeControl: false,
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19,
+      }).addTo(map);
+
+      // Add draggable marker at startCoords
+      let marker = L.marker(startCoords, { draggable: true }).addTo(map);
+
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      // Success → update with live location
+      startCoords = [
+        position.coords.latitude,
+        position.coords.longitude
+      ];
+      console.log("Live location:", startCoords);
+    },
+    (error) => {
+      // Error → keep default
+      console.error("Error fetching location:", error.message);
+    }
+  );
+} else {
+  console.error("Geolocation is not supported by this browser.");
+}
+
+      // Initialize map
+     
+
+      // Update lat/lng inputs with initial position
+      setLatLng(marker.getLatLng());
+
+      // Update inputs when marker dragged
+      marker.on('dragend', function (e) {
+        setLatLng(e.target.getLatLng());
       });
 
-      // Place initial marker (optional)
-      marker = new google.maps.Marker({
-        position: start,
-        map: map,
-        draggable: true,
-      });
-
-      // Initialize hidden fields
-      setLatLng(start.lat, start.lng);
-
-      // Clicking anywhere sets/updates marker + hidden inputs
-      map.addListener("click", (e) => {
-        placeMarker(e.latLng);
-      });
-
-      // Drag end updates coords
-      marker.addListener("dragend", () => {
-        const pos = marker.getPosition();
-        setLatLng(pos.lat(), pos.lng());
+      // Update marker and inputs when map is clicked
+      map.on('click', function (e) {
+        marker.setLatLng(e.latlng);
+        setLatLng(e.latlng);
       });
     }
 
-    function placeMarker(latLng){
-      marker.setPosition(latLng);
-      setLatLng(latLng.lat(), latLng.lng());
+    // Set the hidden latitude and longitude inputs
+    function setLatLng(latlng) {
+      document.getElementById('latitude').value = latlng.lat.toFixed(6);
+      document.getElementById('longitude').value = latlng.lng.toFixed(6);
     }
 
-    function setLatLng(lat, lng){
-      document.getElementById("latitude").value = lat.toFixed(6);
-      document.getElementById("longitude").value = lng.toFixed(6);
-    }
-
-    // Simple client-side handling
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener('DOMContentLoaded', () => {
       initMap();
 
       const category = document.getElementById('category');
@@ -263,60 +324,59 @@
           return;
         }
 
-        const payload = {
-          title: form.title.value.trim(),
-          description: form.description.value.trim(),
-          category: form.category.value,
-          contact: form.contact.value.trim(),
-          address: form.address.value.trim(),
-          latitude: form.latitude.value,
-          longitude: form.longitude.value,
-          status: "open",
-          timestamp: new Date().toISOString(),
-        };
+        const formData = new FormData(form);
 
-        // TODO: Replace this with your actual backend call (PHP/Node API)
-        // Example with fetch:
-        // fetch('/api/requests/create', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
-        //   .then(res => res.json())
-        //   .then(data => { ... })
-
-        console.log("Submitting request:", payload);
-        showAlert("Your request has been submitted (demo). Wire this to your backend next.", "success");
-        form.reset();
-        // keep marker position as-is; if you want to reset, re-center:
-        // map.setCenter({lat: 12.2958, lng: 76.6394});
-        // marker.setPosition({lat: 12.2958, lng: 76.6394});
+        fetch('http://localhost:5000/api/requests/create', {
+          method: 'POST',
+          headers: {
+            // Optionally add Authorization header if needed
+          },
+          body: formData,
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.message) {
+              showAlert(data.message, data.message.toLowerCase().includes('success') ? 'success' : 'danger');
+              if (data.message.toLowerCase().includes('success')) {
+                form.reset();
+                // Optionally reset map marker to default if you want
+                marker.setLatLng([12.9716, 77.5946]);
+                setLatLng(marker.getLatLng());
+              }
+            }
+          })
+          .catch(() => {
+            showAlert('Submit failed. Please try again later.', 'danger');
+          });
       });
 
-      document.getElementById("resetBtn").addEventListener("click", () => {
-        showAlert("", ""); // clear
-        form.classList.remove("was-validated");
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        showAlert('', '');
+        form.classList.remove('was-validated');
+        // Reset marker position on form reset
+        marker.setLatLng([12.9716, 77.5946]);
+        setLatLng(marker.getLatLng());
       });
 
-      function showAlert(message, type){
-        if(!message){
-          alertBox.className = "alert d-none";
-          alertBox.textContent = "";
+      function showAlert(message, type) {
+        if (!message) {
+          alertBox.className = 'alert d-none';
+          alertBox.textContent = '';
           return;
         }
         alertBox.className = `alert alert-${type}`;
         alertBox.textContent = message;
       }
     });
-    fetch('http://localhost:5000/api/requests/create', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer ' + localStorage.getItem('token')
-  },
-  body: formData,
-});
+//     const formData = new FormData(form);
+//     fetch('http://localhost:5000/api/requests/create', {
+//   method: 'POST',
+//   headers: {
+//     'Authorization': 'Bearer ' + localStorage.getItem('token')
+//   },
+//   body: formData,
+// });
 
   </script>
-  <script
-    async
-    defer
-    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=marker"
-  ></script>
 </body>
 </html>
