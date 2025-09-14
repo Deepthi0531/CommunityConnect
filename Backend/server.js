@@ -35,6 +35,28 @@ app.get(/.*/, (req, res) => {
 });
 
 // Start the server and listen for incoming requests
+
+
+
+
+
+
+// Fix typo in controller filename
+// const { registerVolunteer } = require('./controllers/volunteerController'); // corrected path
+// const authMiddleware = require("./middleware/authMiddleware");
+
+
+
+// app.use(cors());
+// app.use(bodyParser.json());
+
+// // Protect volunteer registration route
+// app.post('/api/volunteer/register', authMiddleware, registerVolunteer);
+
+const volunteerRoutes = require('./routes/volunteer');
+app.use('/api/volunteer', volunteerRoutes);
+
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
