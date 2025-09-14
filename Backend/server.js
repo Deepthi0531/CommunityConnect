@@ -13,23 +13,28 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(bodyParser.json());
 
+// Serve static files from the 'frontend' directory
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
+
+// Serve uploaded images from the 'uploads' directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Set up a Content Security Policy header for security
 app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy", "script-src 'self' 'unsafe-eval';");
   next();
 });
 
-// API routes
+// Define API routes
 app.use("/api/users", userRoutes);
-app.use("/api/requests", requestRoutes); // Moved up to ensure it's not caught by the catch-all route
+app.use("/api/requests", requestRoutes);
 
-// Catch-all to serve index.html for any other GET request
+// Catch-all route to serve the main HTML file for any other GET request
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
 
+// Start the server and listen for incoming requests
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
