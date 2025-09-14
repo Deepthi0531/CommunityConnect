@@ -244,113 +244,118 @@
 
   <!-- Page Script -->
   <script>
-    let map, marker;
+  let map, marker;
 
-    function initMap() {
-      const startCoords = [12.9716, 77.5946]; // Bangalore default location
+  function initMap() {
+    const startCoords = [12.9716, 77.5946]; // Bangalore default location
 
-      // Initialize map
-      map = L.map('map').setView(startCoords, 13);
+    // Initialize map
+    map = L.map('map').setView(startCoords, 13);
 
-      // Add OpenStreetMap tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19,
-      }).addTo(map);
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
 
-      // Add draggable marker at startCoords
-      marker = L.marker(startCoords, { draggable: true }).addTo(map);
+    // Add draggable marker at startCoords
+    marker = L.marker(startCoords, { draggable: true }).addTo(map);
 
-      // Update lat/lng inputs with initial position
-      setLatLng(marker.getLatLng());
+    // Update lat/lng inputs with initial position
+    setLatLng(marker.getLatLng());
 
-      // Update inputs when marker dragged
-      marker.on('dragend', function (e) {
-        setLatLng(e.target.getLatLng());
-      });
+    // Update inputs when marker dragged
+    marker.on('dragend', function (e) {
+      setLatLng(e.target.getLatLng());
+    });
 
-      // Update marker and inputs when map is clicked
-      map.on('click', function (e) {
-        marker.setLatLng(e.latlng);
-        setLatLng(e.latlng);
-      });
-    }
-
-    // Set the hidden latitude and longitude inputs
-    function setLatLng(latlng) {
-      document.getElementById('latitude').value = latlng.lat.toFixed(6);
-      document.getElementById('longitude').value = latlng.lng.toFixed(6);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      initMap();
-
-      const category = document.getElementById('category');
-      const photoUploadContainer = document.getElementById('photoUploadContainer');
-      const form = document.getElementById('helpRequestForm');
-      const alertBox = document.getElementById('formAlert');
-
-      category.addEventListener('change', () => {
-        photoUploadContainer.style.display = category.value === 'Lost & Found' ? 'block' : 'none';
-      });
-
-      form.addEventListener('submit', (e) => {
-  e.preventDefault();
-
-  if (!form.checkValidity()) {
-    showAlert('Please fill all required fields.', 'danger');
-    form.classList.add('was-validated');
-    return;
+    // Update marker and inputs when map is clicked
+    map.on('click', function (e) {
+      marker.setLatLng(e.latlng);
+      setLatLng(e.latlng);
+    });
   }
 
-  const formData = new FormData(form);
-  const token = localStorage.getItem('token'); // Get the JWT token from storage
+  // Set the hidden latitude and longitude inputs
+  function setLatLng(latlng) {
+    document.getElementById('latitude').value = latlng.lat.toFixed(6);
+    document.getElementById('longitude').value = latlng.lng.toFixed(6);
+  }
 
-  fetch('http://localhost:5000/api/requests/create', {
-    method: 'POST',
-    headers: {
-      ...(token && { 'Authorization': `Bearer ${token}` }) // Only set if token present
-    },
-    body: formData,
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.message) {
-        showAlert(data.message, data.message.toLowerCase().includes('success') ? 'success' : 'danger');
-        if (data.message.toLowerCase().includes('success')) {
-          form.reset();
-          marker.setLatLng([12.9716, 77.5946]);
-          setLatLng(marker.getLatLng());
-        }
-      }
-    })
-    .catch(() => {
-      showAlert('Submit failed. Please try again later.', 'danger');
+  document.addEventListener('DOMContentLoaded', () => {
+    initMap();
+
+    const category = document.getElementById('category');
+    const photoUploadContainer = document.getElementById('photoUploadContainer');
+    const form = document.getElementById('helpRequestForm');
+    const alertBox = document.getElementById('formAlert');
+
+    // Show photo upload only for Lost & Found category
+    category.addEventListener('change', () => {
+      photoUploadContainer.style.display =
+        category.value === 'Lost & Found' ? 'block' : 'none';
     });
-});
 
+    // Handle form submit
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
 
-      document.getElementById('resetBtn').addEventListener('click', () => {
-        showAlert('', '');
-        form.classList.remove('was-validated');
-        // Reset marker position on form reset
-        marker.setLatLng([12.9716, 77.5946]);
-        setLatLng(marker.getLatLng());
-      });
-
-      function showAlert(message, type) {
-        if (!message) {
-          alertBox.className = 'alert d-none';
-          alertBox.textContent = '';
-          return;
-        }
-        alertBox.className = `alert alert-${type}`;
-        alertBox.textContent = message;
+      if (!form.checkValidity()) {
+        showAlert('Please fill all required fields.', 'danger');
+        form.classList.add('was-validated');
+        return;
       }
+
+      const formData = new FormData(form);
+      const token = localStorage.getItem('token'); // ✅ Get JWT token from storage
+
+      fetch('http://localhost:5000/api/requests/create', {
+        method: 'POST',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }), // ✅ Add auth header if token exists
+        },
+        body: formData,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.message) {
+            showAlert(
+              data.message,
+              data.message.toLowerCase().includes('success')
+                ? 'success'
+                : 'danger'
+            );
+            if (data.message.toLowerCase().includes('success')) {
+              form.reset();
+              marker.setLatLng([12.9716, 77.5946]);
+              setLatLng(marker.getLatLng());
+            }
+          }
+        })
+        .catch(() => {
+          showAlert('Submit failed. Please try again later.', 'danger');
+        });
     });
-   
 
+    // Reset button handler
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      showAlert('', '');
+      form.classList.remove('was-validated');
+      marker.setLatLng([12.9716, 77.5946]);
+      setLatLng(marker.getLatLng());
+    });
 
-  </script>
+    function showAlert(message, type) {
+      if (!message) {
+        alertBox.className = 'alert d-none';
+        alertBox.textContent = '';
+        return;
+      }
+      alertBox.className = `alert alert-${type}`;
+      alertBox.textContent = message;
+    }
+  });
+</script>
+
 </body>
 </html>
