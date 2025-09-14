@@ -9,8 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
 
   <!-- Leaflet CSS for OpenStreetMap -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <!-- Custom CSS -->
   <style>
@@ -239,137 +238,122 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Leaflet JS for OpenStreetMap -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    ></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Page Script -->
   <script>
-    let map, marker;
+  let map, marker;
 
-    function initMap() {
-      // Default to Bangalore in case location fails
-let startCoords = [12.9716, 77.5946];
-const map = L.map('map').setView(startCoords, 13);
+  function initMap() {
+    // Default to Bangalore in case location fails
+    let startCoords = [12.9716, 77.5946];
+    const map = L.map('map').setView(startCoords, 13);
 
-      // Add OpenStreetMap tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19,
-      }).addTo(map);
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
 
-      // Add draggable marker at startCoords
-      let marker = L.marker(startCoords, { draggable: true }).addTo(map);
+    // Add draggable marker at startCoords
+    let marker = L.marker(startCoords, { draggable: true }).addTo(map);
 
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      // Success → update with live location
-      startCoords = [
-        position.coords.latitude,
-        position.coords.longitude
-      ];
-      console.log("Live location:", startCoords);
-    },
-    (error) => {
-      // Error → keep default
-      console.error("Error fetching location:", error.message);
-    }
-  );
-} else {
-  console.error("Geolocation is not supported by this browser.");
-}
-
-      // Initialize map
-     
-
-      // Update lat/lng inputs with initial position
-      setLatLng(marker.getLatLng());
-
-      // Update inputs when marker dragged
-      marker.on('dragend', function (e) {
-        setLatLng(e.target.getLatLng());
-      });
-
-      // Update marker and inputs when map is clicked
-      map.on('click', function (e) {
-        marker.setLatLng(e.latlng);
-        setLatLng(e.latlng);
-      });
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Success → update with live location
+          startCoords = [
+            position.coords.latitude,
+            position.coords.longitude
+          ];
+          console.log("Live location:", startCoords);
+        },
+        (error) => {
+          // Error → keep default
+          console.error("Error fetching location:", error.message);
+        }
+      );
+    } else {
+      console.error("Geolocation is not supported by this browser.");
     }
 
-    // Set the hidden latitude and longitude inputs
-    function setLatLng(latlng) {
-      document.getElementById('latitude').value = latlng.lat.toFixed(6);
-      document.getElementById('longitude').value = latlng.lng.toFixed(6);
-    }
+    // Update lat/lng inputs with initial position
+    setLatLng(marker.getLatLng());
 
-    document.addEventListener('DOMContentLoaded', () => {
-      initMap();
+    // Update inputs when marker dragged
+    marker.on('dragend', function (e) {
+      setLatLng(e.target.getLatLng());
+    });
 
-      const category = document.getElementById('category');
-      const photoUploadContainer = document.getElementById('photoUploadContainer');
-      const form = document.getElementById('helpRequestForm');
-      const alertBox = document.getElementById('formAlert');
-
-      category.addEventListener('change', () => {
-        photoUploadContainer.style.display = category.value === 'Lost & Found' ? 'block' : 'none';
-      });
-
-      form.addEventListener('submit', (e) => {
-  e.preventDefault();
-
-  if (!form.checkValidity()) {
-    showAlert('Please fill all required fields.', 'danger');
-    form.classList.add('was-validated');
-    return;
+    // Update marker and inputs when map is clicked
+    map.on('click', function (e) {
+      marker.setLatLng(e.latlng);
+      setLatLng(e.latlng);
+    });
   }
 
-  const formData = new FormData(form);
-  const token = localStorage.getItem('token'); // Get the JWT token from storage
+  // Set the hidden latitude and longitude inputs
+  function setLatLng(latlng) {
+    document.getElementById('latitude').value = latlng.lat.toFixed(6);
+    document.getElementById('longitude').value = latlng.lng.toFixed(6);
+  }
 
-  fetch('http://localhost:5000/api/requests/create', {
-    method: 'POST',
-    headers: {
-      ...(token && { 'Authorization': `Bearer ${token}` }) // Only set if token present
-    },
-    body: formData,
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.message) {
-        showAlert(data.message, data.message.toLowerCase().includes('success') ? 'success' : 'danger');
-        if (data.message.toLowerCase().includes('success')) {
-          form.reset();
-          marker.setLatLng([12.9716, 77.5946]);
-          setLatLng(marker.getLatLng());
-        }
-      }
-    })
-    .catch(() => {
-      showAlert('Submit failed. Please try again later.', 'danger');
-    });
-});
+  document.addEventListener('DOMContentLoaded', () => {
+    initMap();
 
+    const category = document.getElementById('category');
+    const photoUploadContainer = document.getElementById('photoUploadContainer');
+    const form = document.getElementById('helpRequestForm');
+    const alertBox = document.getElementById('formAlert');
 
-      document.getElementById('resetBtn').addEventListener('click', () => {
-        showAlert('', '');
-        form.classList.remove('was-validated');
-        // Reset marker position on form reset
-        marker.setLatLng([12.9716, 77.5946]);
-        setLatLng(marker.getLatLng());
-      });
-
-      function showAlert(message, type) {
-        if (!message) {
-          alertBox.className = 'alert d-none';
-          alertBox.textContent = '';
-          return;
-        }
-        alertBox.className = `alert alert-${type}`;
-        alertBox.textContent = message;
-      }
+    // Show photo upload only for Lost & Found category
+    category.addEventListener('change', () => {
+      photoUploadContainer.style.display =
+        category.value === 'Lost & Found' ? 'block' : 'none';
     });
 
+    // Handle form submit
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      if (!form.checkValidity()) {
+        showAlert('Please fill all required fields.', 'danger');
+        form.classList.add('was-validated');
+        return;
+      }
+
+      const formData = new FormData(form);
+      const token = localStorage.getItem('token'); // ✅ Get JWT token from storage
+
+      fetch('http://localhost:5000/api/requests/create', {
+        method: 'POST',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }), // ✅ Add auth header if token exists
+        },
+        body: formData,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.message) {
+            showAlert(
+              data.message,
+              data.message.toLowerCase().includes('success')
+                ? 'success'
+                : 'danger'
+            );
+            if (data.message.toLowerCase().includes('success')) {
+              form.reset();
+              marker.setLatLng([12.9716, 77.5946]);
+              setLatLng(marker.getLatLng());
+            }
+          }
+        })
+        .catch(() => {
+          showAlert('Submit failed. Please try again later.', 'danger');
+        });
+    });
+  });
   </script>
+
 </body>
 </html>

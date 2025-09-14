@@ -1,17 +1,17 @@
 const db = require("../config/db");
 
 const Request = {
-  // Create new request with image_url and user_id support
+  // Create new request
   create: (requestData, callback) => {
     const sql = `
       INSERT INTO requests 
-        (title, description, category, contact, address, latitude, longitude, 
-         status, timestamp, image_url, user_id)
+        (user_id, title, description, category, contact, address, latitude, longitude, urgency, image_url, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     db.query(
       sql,
       [
+        requestData.user_id,
         requestData.title,
         requestData.description,
         requestData.category,
@@ -19,10 +19,9 @@ const Request = {
         requestData.address || null,
         requestData.latitude,
         requestData.longitude,
-        requestData.status || "pending",
-        // requestData.timestamp || new Date(),
+        requestData.urgency,
         requestData.image_url || null,
-        requestData.user_id || null,
+        requestData.status || "pending",
       ],
       (err, result) => {
         if (err) return callback(err, null);
@@ -33,7 +32,7 @@ const Request = {
 
   // Get all requests ordered by latest first
   getAll: (callback) => {
-    const sql = "SELECT * FROM requests ORDER BY timestamp DESC";
+    const sql = "SELECT * FROM requests ORDER BY created_at DESC";
     db.query(sql, (err, results) => {
       if (err) return callback(err, null);
       callback(null, results);
