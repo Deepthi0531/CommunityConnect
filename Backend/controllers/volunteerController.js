@@ -90,3 +90,6 @@ const registerVolunteer = async (req, res) => {
   }
 };
 
+// Your existing function here...
+
+module.exports = { registerVolunteer };
