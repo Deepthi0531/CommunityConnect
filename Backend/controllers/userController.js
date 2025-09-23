@@ -2,8 +2,10 @@ const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// @desc    Register a new user
-// @route   POST /api/users/register
+/**
+ * @desc    Register a new user
+ * @route   POST /api/users/register
+ */
 const registerUser = (req, res) => {
   const { name, email, role, password } = req.body;
 
@@ -35,7 +37,6 @@ const registerUser = (req, res) => {
 
       User.create(newUser, (err, result) => {
         if (err) {
-          // Log the full error so you can see the exact cause
           console.error('User creation failed:', err);
           return res.status(500).json({ message: 'Could not create user', error: err.sqlMessage || err.message });
         }
@@ -45,8 +46,10 @@ const registerUser = (req, res) => {
   });
 };
 
-// @desc    Authenticate a user and get token
-// @route   POST /api/users/login
+/**
+ * @desc    Authenticate a user and get token
+ * @route   POST /api/users/login
+ */
 const loginUser = (req, res) => {
   const { email, password } = req.body;
 
@@ -69,7 +72,12 @@ const loginUser = (req, res) => {
         return res.status(500).json({ message: 'Server error during password comparison' });
       }
       if (isMatch) {
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '30d' });
+        const token = jwt.sign(
+          { id: user.id, name: user.name, email: user.email },
+          process.env.JWT_SECRET || 'your_jwt_secret', 
+          { expiresIn: '30d' }
+        );
+
         res.json({
           _id: user.id,
           name: user.name,

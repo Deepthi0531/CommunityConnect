@@ -199,7 +199,7 @@
                 <div class="d-flex align-items-center justify-content-between mt-2">
                   <small class="hint">Click on the map to drop/move the pin. Latitude and longitude will be auto-filled.</small>
                   <div class="badge-legend">
-                    <span class="badge bg-primary">Request Location</span>
+                    
                   </div>
                 </div>
               </div>
@@ -317,7 +317,7 @@
         const formData = new FormData(form);
         const token = localStorage.getItem('token');
 
-        fetch('http://localhost:5000/api/requests/create', {
+        fetch('http://localhost:5000/api/requests', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

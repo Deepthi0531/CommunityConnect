@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('token', data.token);
           alert('Login successful!');
           // Redirect to a dashboard or homepage
-          window.location.href = '/frontend/index.html';
+          window.location.href = '/frontend/dashboard.html';
 
         } else {
           errorMessage.textContent = data.message || 'Login failed.';

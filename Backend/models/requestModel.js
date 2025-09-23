@@ -1,69 +1,62 @@
+// In Backend/models/requestModel.js
 const db = require("../config/db");
 
 const Request = {
-  // Create new request
+  /**
+   * @desc    Create a new help request.
+   */
   create: (requestData, callback) => {
-    const sql = `
-      INSERT INTO requests 
-        (user_id, title, description, category, contact, address, latitude, longitude, urgency, image_url, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    db.query(
-      sql,
-      [
-        requestData.user_id,
-        requestData.title,
-        requestData.description,
-        requestData.category,
-        requestData.contact,
-        requestData.address || null,
-        requestData.latitude,
-        requestData.longitude,
-        requestData.urgency,
-        requestData.image_url || null,
-        requestData.status || "pending",
-      ],
-      (err, result) => {
-        if (err) return callback(err, null);
-        callback(null, result);
-      }
-    );
+    const sql = "INSERT INTO requests SET ?";
+    db.query(sql, requestData, callback);
   },
 
-  // Get all requests ordered by latest first
+  /**
+   * @desc    FOR THE MAP: Get requests within a certain radius of a location.
+   */
+  findNearby: (lat, lon, radius, callback) => {
+    const sql = `
+      SELECT *, ( 6371 * acos( cos( radians(?) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitude ) ) ) ) AS distance
+      FROM requests
+      WHERE status = 'pending'
+      HAVING distance < ?
+      ORDER BY urgency DESC, distance ASC;
+    `;
+    db.query(sql, [lat, lon, lat, radius], callback);
+  },
+
+  /**
+   * @desc    FOR ADMINS: Get ALL requests from the database.
+   */
   getAll: (callback) => {
     const sql = "SELECT * FROM requests ORDER BY created_at DESC";
-    db.query(sql, (err, results) => {
-      if (err) return callback(err, null);
-      callback(null, results);
-    });
+    db.query(sql, callback);
   },
 
-  // Get request by ID
+  /**
+   * @desc    Get a single request by its ID.
+   */
   getById: (id, callback) => {
     const sql = "SELECT * FROM requests WHERE id = ?";
-    db.query(sql, [id], (err, result) => {
+    db.query(sql, [id], (err, results) => {
       if (err) return callback(err, null);
-      callback(null, result[0] || null);
+      callback(null, results[0] || null);
     });
   },
 
-  // Update request status
+  /**
+   * @desc    Update the status of a request.
+   */
   updateStatus: (id, status, callback) => {
     const sql = "UPDATE requests SET status = ? WHERE id = ?";
-    db.query(sql, [status, id], (err, result) => {
-      if (err) return callback(err, null);
-      callback(null, result);
-    });
+    db.query(sql, [status, id], callback);
   },
 
-  // Delete request
+  /**
+   * @desc    Delete a request by its ID.
+   */
   delete: (id, callback) => {
     const sql = "DELETE FROM requests WHERE id = ?";
-    db.query(sql, [id], (err, result) => {
-      if (err) return callback(err, null);
-      callback(null, result);
-    });
+    db.query(sql, [id], callback);
   },
 };
 

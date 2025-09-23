@@ -77,12 +77,23 @@ const createRequest = (req, res) => {
 };
 
 // Get all requests
-const getRequests = (req, res) => {
-  Request.getAll((err, requests) => {
+const getNearbyRequests = (req, res) => {
+  const { lat, lon } = req.query; // Get coordinates from the request URL
+  const radius = 5; // Search radius in kilometers
+
+  // Validate that coordinates were provided
+  if (!lat || !lon) {
+    return res.status(400).json({ message: 'Latitude and longitude are required' });
+  }
+
+  // Call the findNearby function in the model
+  Request.findNearby(parseFloat(lat), parseFloat(lon), radius, (err, requests) => {
     if (err) {
-      return res.status(500).json({ message: "Error fetching requests", error: err.message });
+      console.error("Database error:", err);
+      return res.status(500).json({ message: 'Server Error' });
     }
-    res.status(200).json(requests);
+    // Send the found requests back to the frontend
+    res.json(requests);
   });
 };
 
@@ -121,7 +132,7 @@ const deleteRequest = (req, res) => {
 
 module.exports = {
   createRequest,
-  getRequests,
+  getNearbyRequests,
   getRequestById,
   updateRequest,
   deleteRequest,
