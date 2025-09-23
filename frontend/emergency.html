@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Emergency - CommunityConnect</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h2 class="mb-4 text-center">Report Emergency</h2>
+    <form id="emergency-form" class="mx-auto" style="max-width: 400px;">
+      <div class="mb-3">
+        <label for="emergencyType" class="form-label">Type of Emergency</label>
+        <select id="emergencyType" class="form-select" required>
+          <option value="">Select</option>
+          <option value="Blood">Blood</option>
+          <option value="Food">Food</option>
+          <option value="Rescue">Rescue</option>
+          <option value="Fire">Fire</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-danger w-100">Send Emergency Alert</button>
+    </form>
+  </div>
+
+  <script src="js/emergency.js"></script>
+</body>
+</html>

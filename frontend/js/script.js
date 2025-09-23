@@ -25,7 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (response.ok) {
           // Assuming the backend sends a token
+          
           localStorage.setItem('token', data.token);
+          localStorage.setItem('latitude', data.latitude);
+          localStorage.setItem('longitude', data.longitude);
+
           alert('Login successful!');
           // Redirect to a dashboard or homepage
           window.location.href = '/frontend/dashboard.html';
