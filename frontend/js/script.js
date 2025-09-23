@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           alert('Login successful!');
           // Redirect to a dashboard or homepage
-          window.location.href = '/CommunityConnect/frontend/index.html';
+          window.location.href = '/frontend/dashboard.html';
 
         } else {
           errorMessage.textContent = data.message || 'Login failed.';
@@ -59,7 +59,16 @@ document.addEventListener('DOMContentLoaded', () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email, role, password })
-        });
+        })
+        .then(res => res.json())
+.then(data => {
+  if (data.token) {
+    localStorage.setItem('token', data.token);  // Save token in browser
+    window.location.href = 'createhelp.html';   // Redirect to create post page
+  } else {
+    alert('Invalid login');
+  }
+});
 
         const data = await response.json();
 

@@ -5,7 +5,7 @@ require("dotenv").config();
 const userRoutes = require('./routes/userRoutes');
 const requestRoutes = require('./routes/requests');
 const path = require('path');
-const db = require("./config/db"); // Ensure this is correctly configured
+const db = require("./config/db");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,25 +33,6 @@ app.use("/api/requests", requestRoutes);
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
-
-// Start the server and listen for incoming requests
-
-
-
-
-
-
-// Fix typo in controller filename
-// const { registerVolunteer } = require('./controllers/volunteerController'); // corrected path
-// const authMiddleware = require("./middleware/authMiddleware");
-
-
-
-// app.use(cors());
-// app.use(bodyParser.json());
-
-// // Protect volunteer registration route
-// app.post('/api/volunteer/register', authMiddleware, registerVolunteer);
 
 const volunteerRoutes = require('./routes/volunteer');
 app.use('/api/volunteer', volunteerRoutes);

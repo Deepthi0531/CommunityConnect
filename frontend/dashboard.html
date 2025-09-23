@@ -1,76 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>User Dashboard - CommunityConnect</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="index.html">CommunityConnect</a>
-      <div class="d-flex">
-        <a href="index.html" class="btn btn-outline-light me-2">Home</a>
-        <a href="login.html" class="btn btn-outline-light">Logout</a>
-      </div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="#">CommunityConnect</a>
+            <div class="d-flex">
+                <a href="index.html" class="btn btn-outline-light me-2">Home</a>
+                <a href="/login.html" id="logout-button" class="btn btn-outline-light">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">User Dashboard</h2>
+            <a href="createhelp.html" class="btn btn-primary fw-bold">
+                Create Help Request
+            </a>
+        </div>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">My Profile</div>
+            <div class="card-body">
+                <p><strong>Name:</strong> <span id="userName">Loading...</span></p>
+                <p><strong>Email:</strong> <span id="userEmail">Loading...</span></p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">Help Requests</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Urgency</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Contact</th>
+                                <th>Address</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requests-table-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-  </nav>
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login.html';
+        return;
+    }
 
-  <!-- Main Container -->
-  <div class="container my-5">
-    <h2 class="mb-4 text-center">User Dashboard</h2>
+    populateUserProfile(token);
+    fetchNearbyRequests();
 
-    <!-- User Profile Section -->
-    <div class="card mb-4 shadow-sm">
-      <div class="card-header bg-primary text-white">My Profile</div>
-      <div class="card-body">
-        <p><strong>Name:</strong> <span id="userName"></span></p>
-        <p><strong>Email:</strong> <span id="userEmail"></span></p>
-        <p><strong>Phone:</strong> <span id="userPhone"></span></p>
-      </div>
-    </div>
+    document.getElementById('logout-button').addEventListener('click', (e) => {
+        e.preventDefault();
+        localStorage.removeItem('token');
+        window.location.href = '/login.html';
+    });
+});
 
-    <!-- My Help Requests -->
-    <div class="card mb-4 shadow-sm">
-      <div class="card-header bg-primary text-white">My Help Requests</div>
-      <div class="card-body">
-        <table class="table table-striped table-bordered">
-          <thead>
+function populateUserProfile(token) {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        document.getElementById('userName').textContent = payload.name || 'N/A';
+        document.getElementById('userEmail').textContent = payload.email || 'N/A';
+    } catch (error) {
+        console.error('Failed to decode token:', error);
+        localStorage.removeItem('token');
+        window.location.href = '/login.html';
+    }
+}
+
+function fetchNearbyRequests() {
+    if (!navigator.geolocation) {
+        return alert("Geolocation is not supported by your browser.");
+    }
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+            const response = await fetch(`/api/requests?lat=${latitude}&lon=${longitude}`);
+            if (!response.ok) throw new Error('Failed to fetch requests.');
+            const requests = await response.json();
+            displayRequests(requests);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }, () => {
+        alert("Unable to retrieve your location.");
+    });
+}
+
+function displayRequests(requests) {
+    const tableBody = document.getElementById('requests-table-body');
+    tableBody.innerHTML = ''; 
+
+    if (requests.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No help requests found nearby.</td></tr>';
+        return;
+    }
+
+    requests.forEach(req => {
+        const urgencyClass = req.urgency === 'emergency' ? 'text-danger fw-bold' : '';
+        const row = `
             <tr>
-              <th>Title</th>
-              <th>Category</th>
-              <th>Status</th>
-              <th>Location</th>
-              <th>Contact</th>
-              <th>Date</th>
+                <td class="${urgencyClass}">${req.urgency.charAt(0).toUpperCase() + req.urgency.slice(1)}</td>
+                <td>${req.title}</td>
+                <td>${req.category}</td>
+                <td>${req.contact}</td>
+                <td>${req.address || 'N/A'}</td>
+                <td>${new Date(req.created_at).toLocaleDateString()}</td>
             </tr>
-          </thead>
-          <tbody id="myRequestsTable">
-            <!-- User's help requests will appear here -->
-          </tbody>
-        </table>
-      </div>
-    </div>
+        `;
+        tableBody.innerHTML += row;
+    });
+}
+    </script>
+    
 
-    <!-- Quick Actions -->
-    <div class="d-flex justify-content-end">
-      <a href="volunteer.html" class="btn btn-warning">Register as Volunteer</a>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <footer class="bg-dark text-white text-center p-3 mt-4">
-    &copy; 2025 CommunityConnect | User Dashboard
-  </footer>
-
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // Placeholder JS (Frontend Only)
-    console.log("User Dashboard Loaded. Connect with backend APIs to display user data.");
-  </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
