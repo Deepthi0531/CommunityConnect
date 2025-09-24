@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const requestController = require("../controllers/requestController");
-const authMiddleware = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 const multer = require("multer");
 const path = require("path");
 
@@ -14,13 +14,12 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-
 // Routes
 
-router.post("/create", authMiddleware, upload.single("photo"), requestController.createRequest);
-router.get("/", requestController.getRequests);
+router.post("/", protect, upload.single("photo"), requestController.createRequest);
+router.get("/", requestController.getNearbyRequests);
 router.get("/:id", requestController.getRequestById);
-router.put("/:id", authMiddleware, requestController.updateRequest);
-router.delete("/:id", authMiddleware, requestController.deleteRequest);
+router.put("/:id", protect, requestController.updateRequest);
+router.delete("/:id", protect, requestController.deleteRequest);
 
 module.exports = router;

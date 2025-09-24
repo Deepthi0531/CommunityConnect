@@ -8,6 +8,9 @@
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
   <!-- Custom CSS -->
   <style>
     :root{
@@ -40,9 +43,6 @@
     #map{ width:100%; height: 300px; }
     footer{ margin-top: 48px; }
   </style>
-
-  <!-- Google Maps -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
 </head>
 <body>
 
@@ -50,7 +50,7 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
     <a class="navbar-brand" href="index.html">CommunityConnect</a>
     <div class="ms-auto">
-            <a href="index.html" class="btn btn-outline-light">Home</a>
+      <a href="index.html" class="btn btn-outline-light">Home</a>
       <a href="login.html" class="btn btn-outline-light ms-2">Login</a>
     </div>
   </nav>
@@ -107,17 +107,9 @@
 
               <div class="col-12">
                 <label class="form-label">Location (Optional)</label>
-                <div class="map-wrap"><div class="map-wrap">
-  <iframe
-    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3890.156330192418!2d77.5946!3d12.9716!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae1670f57b77ff%3A0xbdd2dbfddbba0!2sBangalore%2C%20Karnataka!5e0!3m2!1sen!2sin!4v1234567890"
-    width="100%"
-    height="380"
-    style="border:0;"
-    allowfullscreen=""
-    loading="lazy">
-  </iframe>
-</div>
-</div>
+                <div class="map-wrap">
+                  <div id="map"></div>
+                </div>
                 <small class="hint">Click on the map to drop a marker. This helps us match you with nearby requests.</small>
                 <input type="hidden" id="latitude" name="latitude" />
                 <input type="hidden" id="longitude" name="longitude" />
@@ -143,74 +135,105 @@
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
   <!-- Page Script -->
   <script>
-    let map, marker;
+  const token = localStorage.getItem('token');
+  let map, marker;
 
-    function initMap() {
-      const start = { lat: 12.2958, lng: 76.6394 }; // Mysuru default
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: start,
-        zoom: 13,
-      });
-      marker = new google.maps.Marker({ position: start, map: map, draggable: true });
-      setLatLng(start.lat, start.lng);
+  document.addEventListener("DOMContentLoaded", () => {
+    // Mysuru default
+    const start = [12.2958, 76.6394];
+    map = L.map('map').setView(start, 13);
 
-      map.addListener("click", (e) => { placeMarker(e.latLng); });
-      marker.addListener("dragend", () => {
-        const pos = marker.getPosition();
-        setLatLng(pos.lat(), pos.lng());
-      });
-    }
+    // OSM tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
 
-    function placeMarker(latLng){
-      marker.setPosition(latLng);
-      setLatLng(latLng.lat(), latLng.lng());
-    }
-    function setLatLng(lat, lng){
+    // Add draggable marker at start location
+    marker = L.marker(start, { draggable: true }).addTo(map);
+    setLatLng(start[0], start[1]);
+
+    // Place marker on click
+    map.on('click', function(e) {
+      marker.setLatLng(e.latlng);
+      setLatLng(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Update coordinates on marker drag
+    marker.on('dragend', function(e) {
+      const pos = marker.getLatLng();
+      setLatLng(pos.lat, pos.lng);
+    });
+
+    function setLatLng(lat, lng) {
       document.getElementById("latitude").value = lat.toFixed(6);
       document.getElementById("longitude").value = lng.toFixed(6);
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      initMap();
-      const form = document.getElementById("volunteerForm");
-      const alertBox = document.getElementById("formAlert");
+    // Form logic
+    const form = document.getElementById("volunteerForm");
+    const alertBox = document.getElementById("formAlert");
 
-      form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        if (!form.checkValidity()) {
-          showAlert("Please fill all required fields.", "danger");
-          form.classList.add("was-validated");
-          return;
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!form.checkValidity()) {
+        showAlert("Please fill all required fields.", "danger");
+        form.classList.add("was-validated");
+        return;
+      }
+
+      const payload = {
+        name: form.name.value.trim(),
+        email: form.email.value.trim(),
+        phone: form.phone.value.trim(),
+        availability: form.availability.value,
+        skills: form.skills.value.trim(),
+        latitude: form.latitude.value,
+        longitude: form.longitude.value,
+      };
+
+      try {
+        const response = await fetch('http://localhost:5000/api/volunteer/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token, // Properly nested inside headers
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showAlert("You have been registered as a volunteer!", "success");
+          form.reset();
+        } else {
+          showAlert(data.message || "Registration failed.", "danger");
         }
-
-        const payload = {
-          name: form.name.value.trim(),
-          email: form.email.value.trim(),
-          phone: form.phone.value.trim(),
-          availability: form.availability.value,
-          skills: form.skills.value.trim(),
-          latitude: form.latitude.value,
-          longitude: form.longitude.value,
-          timestamp: new Date().toISOString(),
-        };
-
-        console.log("Volunteer Registered:", payload);
-        showAlert("You have been registered as a volunteer (demo). Hook this to backend.", "success");
-        form.reset();
-      });
-
-      function showAlert(message, type){
-        if(!message){
-          alertBox.className = "alert d-none";
-          alertBox.textContent = "";
-          return;
-        }
-        alertBox.className = "alert alert-" + type;
-        alertBox.textContent = message;
+      } catch (error) {
+        showAlert("An error occurred. Please try again.", "danger");
+        console.error("Registration error:", error);
       }
     });
-  </script>
+
+    function showAlert(message, type) {
+      if (!message) {
+        alertBox.className = "alert d-none";
+        alertBox.textContent = "";
+        return;
+      }
+      alertBox.className = "alert alert-" + type;
+      alertBox.textContent = message;
+    }
+  });
+</script>
+
+
 </body>
 </html>

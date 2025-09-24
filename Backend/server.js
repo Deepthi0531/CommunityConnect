@@ -1,35 +1,25 @@
 const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-require("dotenv").config();
-const userRoutes = require('./routes/userRoutes');
-const requestRoutes = require('./routes/requests');
-const path = require('path');
-const db = require("./config/db"); // Ensure this is correctly configured
+const router = express.Router();
+const requestController = require("../controllers/requestController");
+const { protect } = require("../middleware/authMiddleware");
+const multer = require("multer");
+const path = require("path");
 
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-app.use(cors());
-app.use(bodyParser.json());
-
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-app.use((req, res, next) => {
-  res.setHeader("Content-Security-Policy", "script-src 'self' 'unsafe-eval';");
-  next();
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, path.join(__dirname, "..", "uploads")),
+  filename: (req, file, cb) => {
+    const ext = file.originalname.split(".").pop();
+    cb(null, `${Date.now()}.${ext}`);
+  },
 });
 
-// API routes
-app.use("/api/users", userRoutes);
-app.use("/api/requests", requestRoutes); // Moved up to ensure it's not caught by the catch-all route
+const upload = multer({ storage });
+// Routes
 
-// Catch-all to serve index.html for any other GET request
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
-});
+router.post("/", protect, upload.single("photo"), requestController.createRequest);
+router.get("/", requestController.getNearbyRequests);
+router.get("/:id", requestController.getRequestById);
+router.put("/:id", protect, requestController.updateRequest);
+router.delete("/:id", protect, requestController.deleteRequest);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+module.exports = router;
