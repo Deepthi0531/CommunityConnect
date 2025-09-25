@@ -6,6 +6,11 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
 const client = twilio(accountSid, authToken);
 
+// Utility function to validate E.164 phone number format (basic)
+const isValidPhone = (phone) => {
+  return /^\+?[1-9]\d{1,14}$/.test(phone);
+};
+
 // POST /api/emergency/alert
 // Body: { emergencyType, latitude, longitude }
 const alertEmergency = async (req, res) => {
@@ -13,20 +18,30 @@ const alertEmergency = async (req, res) => {
     const userId = req.user.id; // from JWT auth middleware
     const { emergencyType, latitude, longitude } = req.body;
 
-    if (!emergencyType || !latitude || !longitude) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    // Validate presence and types of latitude and longitude
+    if (
+      !emergencyType || 
+      typeof latitude !== 'number' || isNaN(latitude) || 
+      typeof longitude !== 'number' || isNaN(longitude)
+    ) {
+      return res.status(400).json({ message: 'Missing or invalid required fields' });
     }
+
+    // Debug logging input coordinates and emergency type
+    console.log(`Emergency alert received: type=${emergencyType}, lat=${latitude} (${typeof latitude}), lon=${longitude} (${typeof longitude})`);
 
     // Find nearby users and volunteers within 5km radius
     const nearbyUsers = await Emergency.findNearbyUsers(latitude, longitude, 5);
     const nearbyVolunteers = await Emergency.findNearbyVolunteers(latitude, longitude, 5);
+
+    console.log(`Found ${nearbyUsers.length} nearby users and ${nearbyVolunteers.length} volunteers`);
 
     // Compose SMS message
     const message = `Emergency Alert: ${emergencyType} reported nearby. Please respond if available.`;
 
     // Send SMS to nearby users
     for (const user of nearbyUsers) {
-      if (user.phone) {
+      if (user.phone && isValidPhone(user.phone)) {
         try {
           await client.messages.create({
             body: message,
@@ -34,14 +49,16 @@ const alertEmergency = async (req, res) => {
             to: user.phone,
           });
         } catch (err) {
-          console.error(`Failed to send SMS to user ${user.id}:`, err.message);
+          console.error(`Failed to send SMS to user ${user.id} (${user.phone}):`, err.message);
         }
+      } else {
+        console.warn(`Skipping user ${user.id} due to invalid or missing phone: ${user.phone}`);
       }
     }
 
     // Send SMS and optionally calls to nearby volunteers
     for (const volunteer of nearbyVolunteers) {
-      if (volunteer.phone) {
+      if (volunteer.phone && isValidPhone(volunteer.phone)) {
         try {
           await client.messages.create({
             body: `[VOLUNTEER] ${message}`,
@@ -49,18 +66,19 @@ const alertEmergency = async (req, res) => {
             to: volunteer.phone,
           });
 
-          // Optional: Place automated call for critical emergencies
-          // Comment/uncomment as needed
+          // Place automated call for critical emergencies if enabled
           if (['Fire', 'Rescue'].includes(emergencyType)) {
             await client.calls.create({
-              url: 'https://your-twiml-url.com/emergency-call.xml', // TwiML instructions
+              url: 'https://your-twiml-url.com/emergency-call.xml', // TwiML instructions URL
               from: twilioNumber,
               to: volunteer.phone,
             });
           }
         } catch (err) {
-          console.error(`Failed to notify volunteer ${volunteer.id}:`, err.message);
+          console.error(`Failed to notify volunteer ${volunteer.id} (${volunteer.phone}):`, err.message);
         }
+      } else {
+        console.warn(`Skipping volunteer ${volunteer.id} due to invalid or missing phone: ${volunteer.phone}`);
       }
     }
 

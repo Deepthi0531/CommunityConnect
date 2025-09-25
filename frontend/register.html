@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Register - CommunityConnect</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     body {
@@ -17,11 +17,14 @@
       justify-content: center;
       align-items: stretch;
       gap: 32px;
+      flex-wrap: wrap;
     }
     .card {
       border-radius: 18px;
       box-shadow: 0 4px 32px rgba(44,62,80,.1);
       border: none;
+      flex: 1 1 350px;
+      max-width: 400px;
     }
     .location-panel {
       background: #fff;
@@ -39,6 +42,29 @@
       width: 100%;
       border-radius: 12px;
     }
+    .location-coords {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      gap: 10px;
+    }
+    .location-coords > div {
+      flex: 1;
+    }
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #333;
+      display: none;
+      z-index: 9999;
+    }
     @media (max-width: 900px) {
       .register-container {
         flex-direction: column;
@@ -46,121 +72,166 @@
       }
       .location-panel, .card {
         width: 100%;
+        max-width: none;
       }
     }
   </style>
 </head>
 <body>
+  <div class="loading-overlay" id="loading">Registering...</div>
+
   <div class="register-container">
-    <div class="card p-4" style="width: 400px;">
+    <!-- Registration Form Card -->
+    <div class="card p-4">
       <h3 class="text-center mb-3">Register</h3>
-      <form id="register-form">
+      <form id="register-form" novalidate>
         <div class="mb-3">
-          <label for="name">Name</label>
-          <input type="text" id="name" class="form-control" required>
+          <label for="name" class="form-label">Name</label>
+          <input type="text" id="name" class="form-control" required />
+          <div class="invalid-feedback">Please enter your name.</div>
         </div>
+
         <div class="mb-3">
-          <label for="email">Email</label>
-          <input type="email" id="email" class="form-control" required>
+          <label for="email" class="form-label">Email</label>
+          <input type="email" id="email" class="form-control" required />
+          <div class="invalid-feedback">Please enter a valid email.</div>
         </div>
+
         <div class="mb-3">
-          <label for="role">Role</label>
+          <label for="role" class="form-label">Role</label>
           <select id="role" class="form-select" required>
             <option value="user" selected>User</option>
             <option value="volunteer">Volunteer</option>
           </select>
+          <div class="invalid-feedback">Please select a role.</div>
         </div>
+
         <div class="mb-3">
-          <label for="password">Password</label>
-          <input type="password" id="password" class="form-control" required>
+          <label for="password" class="form-label">Password</label>
+          <input type="password" id="password" class="form-control" minlength="6" required />
+          <div class="invalid-feedback">Password must be at least 6 characters.</div>
         </div>
-        <input type="hidden" id="latitude" name="latitude" required>
-        <input type="hidden" id="longitude" name="longitude" required>
+
+        <!-- Hidden input fields for lat/lon sent to backend -->
+        <input type="hidden" id="latitude" name="latitude" required />
+        <input type="hidden" id="longitude" name="longitude" required />
+
         <p id="error-message" class="text-danger text-center mt-2"></p>
+
         <button type="submit" class="btn btn-success w-100">Register</button>
       </form>
-      <p class="text-center mt-3">Already have an account? <a href="login.html">Login</a></p>
+
+      <p class="text-center mt-3">
+        Already have an account? <a href="login.html">Login</a>
+      </p>
     </div>
+
+    <!-- Location Selection Panel -->
     <div class="location-panel">
-      <label class="mb-1" style="font-weight:600;">Select Your Location</label>
-      <div id="map" class="mb-2"></div>
-      <div class="d-flex justify-content-between w-100 mt-2">
-        <div style="width:49%;">
-          <label for="latitude" class="small">Latitude</label>
-          <input type="text" id="display-latitude" class="form-control form-control-sm" readonly>
+      <label for="map" class="mb-1 fw-semibold">Select Your Location</label>
+      <div id="map" aria-label="Location map" role="region" tabindex="0"></div>
+
+      <div class="location-coords">
+        <div>
+          <label for="display-latitude" class="form-label small">Latitude</label>
+          <input type="text" id="display-latitude" class="form-control form-control-sm" readonly />
         </div>
-        <div style="width:49%;">
-          <label for="longitude" class="small">Longitude</label>
-          <input type="text" id="display-longitude" class="form-control form-control-sm" readonly>
+        <div>
+          <label for="display-longitude" class="form-label small">Longitude</label>
+          <input type="text" id="display-longitude" class="form-control form-control-sm" readonly />
         </div>
       </div>
     </div>
   </div>
 
-  <script src="js/script.js"></script>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    var map = L.map('map').setView([22.5726, 88.3639], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    (() => {
+      const map = L.map('map').setView([22.5726, 88.3639], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-    }).addTo(map);
+      }).addTo(map);
 
-    var marker;
-    map.on('click', function(e) {
-      if (marker) { map.removeLayer(marker); }
-      marker = L.marker(e.latlng).addTo(map);
-      document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
-      document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
-      document.getElementById('display-latitude').value = e.latlng.lat.toFixed(6);
-      document.getElementById('display-longitude').value = e.latlng.lng.toFixed(6);
-    });
+      let marker;
 
-    document.getElementById('register-form').addEventListener('submit', async function(e){
-  e.preventDefault();
+      map.on('click', function (e) {
+        if (marker) map.removeLayer(marker);
 
-  const name = document.getElementById('name').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const role = document.getElementById('role').value;
-  const password = document.getElementById('password').value;
-  const latitude = document.getElementById('latitude').value;
-  const longitude = document.getElementById('longitude').value;
+        marker = L.marker(e.latlng).addTo(map);
 
-  if (!latitude || !longitude) {
-    document.getElementById('error-message').innerText = 'Please select your location on the map.';
-    return;
-  }
+        // Set hidden input values to submit with form
+        document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
+        document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
 
-  const payload = {
-    name,
-    email,
-    role,
-    password,
-    latitude: parseFloat(latitude),
-    longitude: parseFloat(longitude)
-  };
+        // Set readonly display inputs
+        document.getElementById('display-latitude').value = e.latlng.lat.toFixed(6);
+        document.getElementById('display-longitude').value = e.latlng.lng.toFixed(6);
 
-  try {
-    const res = await fetch('http://localhost:5000/api/users/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
+        // Clear error if any on location selection
+        document.getElementById('error-message').textContent = '';
+      });
 
-    const data = await res.json();
+      const form = document.getElementById('register-form');
+      const loadingOverlay = document.getElementById('loading');
+      const errorMessage = document.getElementById('error-message');
 
-    if (res.ok) {
-      alert('Registration successful!');
-      window.location.href = 'login.html';
-    } else {
-      document.getElementById('error-message').innerText = data.message || 'Registration failed';
-    }
-  } catch(err) {
-    document.getElementById('error-message').innerText = 'Server error, please try again later';
-  }
-});
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
+        // Clear previous errors
+        errorMessage.textContent = '';
+
+        // Validate form fields with HTML5 constraint validation
+        if (!form.checkValidity()) {
+          form.classList.add('was-validated');
+          return;
+        }
+
+        // Validate location fields explicitly
+        const latVal = document.getElementById('latitude').value.trim();
+        const lonVal = document.getElementById('longitude').value.trim();
+
+        if (!latVal || !lonVal || isNaN(parseFloat(latVal)) || isNaN(parseFloat(lonVal))) {
+          errorMessage.textContent = 'Please select a valid location on the map.';
+          return;
+        }
+
+        // Prepare payload
+        const payload = {
+          name: document.getElementById('name').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          role: document.getElementById('role').value,
+          password: document.getElementById('password').value,
+          latitude: parseFloat(latVal),
+          longitude: parseFloat(lonVal),
+        };
+
+        try {
+          loadingOverlay.style.display = 'flex';
+
+          const response = await fetch('http://localhost:5000/api/users/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await response.json();
+
+          loadingOverlay.style.display = 'none';
+
+          if (response.ok) {
+            alert('Registration successful!');
+            window.location.href = 'login.html';
+          } else {
+            errorMessage.textContent = data.message || 'Registration failed.';
+          }
+        } catch (error) {
+          loadingOverlay.style.display = 'none';
+          errorMessage.textContent = 'Server error, please try again later.';
+          console.error('Registration error:', error);
+        }
+      });
+    })();
   </script>
 </body>
 </html>

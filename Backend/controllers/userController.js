@@ -1,17 +1,18 @@
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
-/**
- * @desc    Register a new user
- * @route   POST /api/users/register
- */
 const registerUser = (req, res) => {
-  const { name, email, role, password } = req.body;
+  const { name, email, role, password, latitude, longitude } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ message: 'Please provide name, email, and password' });
   }
+
+  // Optional: validate latitude and longitude are numbers (or provide defaults)
+  const lat = typeof latitude === 'number' && !isNaN(latitude) ? latitude : 0.0;
+  const lon = typeof longitude === 'number' && !isNaN(longitude) ? longitude : 0.0;
+console.log('Received latitude:', req.body.latitude);
+console.log('Received longitude:', req.body.longitude);
 
   User.findByEmail(email, (err, userExists) => {
     if (err) {
@@ -33,6 +34,8 @@ const registerUser = (req, res) => {
         email,
         role: role || 'user',
         password: hashedPassword,
+        latitude: lat,
+        longitude: lon,
       };
 
       User.create(newUser, (err, result) => {

@@ -1,44 +1,46 @@
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('login-form');
   const registerForm = document.getElementById('register-form');
-  
-  // Use a separate error message element for each form if they are different
-  const errorMessage = document.getElementById('error-message');
+
+  // Separate error messages for both forms
+  const loginErrorMessage = document.getElementById('login-error-message');
+  const registerErrorMessage = document.getElementById('register-error-message');
 
   // --- LOGIN FORM HANDLER ---
   if (loginForm) {
     loginForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      errorMessage.textContent = '';
+      if (loginErrorMessage) loginErrorMessage.textContent = '';
 
-      const email = document.getElementById('email').value;
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        if (loginErrorMessage) loginErrorMessage.textContent = 'Please enter email and password.';
+        return;
+      }
 
       try {
         const response = await fetch('http://localhost:5000/api/users/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
+          body: JSON.stringify({ email, password }),
         });
 
         const data = await response.json();
 
         if (response.ok) {
-          // Assuming the backend sends a token
-          
           localStorage.setItem('token', data.token);
-          localStorage.setItem('latitude', data.latitude);
-          localStorage.setItem('longitude', data.longitude);
+          if (data.latitude) localStorage.setItem('latitude', data.latitude);
+          if (data.longitude) localStorage.setItem('longitude', data.longitude);
 
           alert('Login successful!');
-          // Redirect to a dashboard or homepage
-          window.location.href = '/frontend/dashboard.html';
-
+          window.location.href = 'http://127.0.0.1:5500/CommunityConnect/frontend/index.html';
         } else {
-          errorMessage.textContent = data.message || 'Login failed.';
+          if (loginErrorMessage) loginErrorMessage.textContent = data.message || 'Login failed.';
         }
       } catch (error) {
-        errorMessage.textContent = 'An error occurred. Please try again.';
+        if (loginErrorMessage) loginErrorMessage.textContent = 'An error occurred. Please try again.';
       }
     });
   }
@@ -47,39 +49,47 @@ document.addEventListener('DOMContentLoaded', () => {
   if (registerForm) {
     registerForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      errorMessage.textContent = '';
+      if (registerErrorMessage) registerErrorMessage.textContent = '';
 
-      const name = document.getElementById('name').value;
-      const email = document.getElementById('email').value;
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
       const role = document.getElementById('role').value;
       const password = document.getElementById('password').value;
+
+      // Read latitude and longitude from hidden form inputs
+      const latStr = document.getElementById('latitude').value;
+      const lonStr = document.getElementById('longitude').value;
+
+      const latitude = parseFloat(latStr);
+      const longitude = parseFloat(lonStr);
+
+      if (!name || !email || !password) {
+        if (registerErrorMessage) registerErrorMessage.textContent = 'Please fill all required fields.';
+        return;
+      }
+
+      if (!latStr || !lonStr || isNaN(latitude) || isNaN(longitude)) {
+        if (registerErrorMessage) registerErrorMessage.textContent = 'Please select your location on the map.';
+        return;
+      }
 
       try {
         const response = await fetch('http://localhost:5000/api/users/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, role, password })
-        })
-        .then(res => res.json())
-.then(data => {
-  if (data.token) {
-    localStorage.setItem('token', data.token);  // Save token in browser
-    window.location.href = 'createhelp.html';   // Redirect to create post page
-  } else {
-    alert('Invalid login');
-  }
-});
+          body: JSON.stringify({ name, email, role, password, latitude, longitude }),
+        });
 
         const data = await response.json();
 
         if (response.ok) {
           alert('Registration successful! Please log in.');
-          window.location.href = '/login.html'; // Redirect to login page
+          window.location.href = '/login.html';
         } else {
-          errorMessage.textContent = data.message || 'Registration failed.';
+          if (registerErrorMessage) registerErrorMessage.textContent = data.message || 'Registration failed.';
         }
       } catch (error) {
-        errorMessage.textContent = 'An error occurred. Please try again.';
+        if (registerErrorMessage) registerErrorMessage.textContent = 'An error occurred. Please try again.';
       }
     });
   }
