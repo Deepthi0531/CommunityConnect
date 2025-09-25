@@ -1,18 +1,20 @@
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const registerUser = (req, res) => {
-  const { name, email, role, password, latitude, longitude } = req.body;
 
-  if (!name || !email || !password) {
-    return res.status(400).json({ message: 'Please provide name, email, and password' });
+const registerUser = (req, res) => {
+  const { name, email, role, password, phone, latitude, longitude } = req.body;
+
+  if (!name || !email || !password || !phone) {
+    return res.status(400).json({ message: 'Please provide name, email, phone, and password' });
   }
 
-  // Optional: validate latitude and longitude are numbers (or provide defaults)
   const lat = typeof latitude === 'number' && !isNaN(latitude) ? latitude : 0.0;
   const lon = typeof longitude === 'number' && !isNaN(longitude) ? longitude : 0.0;
-console.log('Received latitude:', req.body.latitude);
-console.log('Received longitude:', req.body.longitude);
+
+  console.log('Received phone:', phone);
+  console.log('Received latitude:', latitude);
+  console.log('Received longitude:', longitude);
 
   User.findByEmail(email, (err, userExists) => {
     if (err) {
@@ -32,6 +34,7 @@ console.log('Received longitude:', req.body.longitude);
       const newUser = {
         name,
         email,
+        phone,
         role: role || 'user',
         password: hashedPassword,
         latitude: lat,
@@ -49,10 +52,7 @@ console.log('Received longitude:', req.body.longitude);
   });
 };
 
-/**
- * @desc    Authenticate a user and get token
- * @route   POST /api/users/login
- */
+
 const loginUser = (req, res) => {
   const { email, password } = req.body;
 
@@ -77,7 +77,7 @@ const loginUser = (req, res) => {
       if (isMatch) {
         const token = jwt.sign(
           { id: user.id, name: user.name, email: user.email },
-          process.env.JWT_SECRET || 'your_jwt_secret', 
+          process.env.JWT_SECRET || 'your_jwt_secret',
           { expiresIn: '30d' }
         );
 
