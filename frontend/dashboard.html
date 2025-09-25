@@ -119,12 +119,12 @@ function displayRequests(requests) {
         const urgencyClass = req.urgency === 'emergency' ? 'text-danger fw-bold' : '';
         const row = `
             <tr>
-                <td class="${urgencyClass}">${req.urgency.charAt(0).toUpperCase() + req.urgency.slice(1)}</td>
-                <td>${req.title}</td>
-                <td>${req.category}</td>
-                <td>${req.contact}</td>
-                <td>${req.address || 'N/A'}</td>
-                <td>${new Date(req.created_at).toLocaleDateString()}</td>
+                <td class="${urgencyClass}">${requests.urgency.charAt(0).toUpperCase() + req.urgency.slice(1)}</td>
+                <td>${requests.title}</td>
+                <td>${requests.category}</td>
+                <td>${requests.contact}</td>
+                <td>${requests.address || 'N/A'}</td>
+                <td>${new Date(requests.created_at).toLocaleDateString()}</td>
             </tr>
         `;
         tableBody.innerHTML += row;
