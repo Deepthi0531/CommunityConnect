@@ -49,6 +49,9 @@ const path = require('path');
 const userRoutes = require('./routes/userRoutes');
 const requestRoutes = require('./routes/requests');
 const volunteerRoutes = require('./routes/volunteer');
+const emergencyRoutes = require('./routes/emergencyRoutes');
+
+
 
 require("dotenv").config();
 
@@ -83,6 +86,7 @@ app.use((req, res, next) => {
 app.use("/api/users", userRoutes);
 app.use("/api/requests", requestRoutes);
 app.use('/api/volunteer', volunteerRoutes);
+app.use('/api/emergency', emergencyRoutes);
 
 // Catch-all route to serve frontend index.html on unmatched GET requests
 app.get(/.*/, (req, res) => {
