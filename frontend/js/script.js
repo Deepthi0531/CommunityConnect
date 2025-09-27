@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           alert('Login successful!');
           // Redirect to a dashboard or homepage
-          window.location.href = '/frontend/dashboard.html';
+          window.location.href = '/dashboard.html';
 
         } else {
           errorMessage.textContent = data.message || 'Login failed.';
