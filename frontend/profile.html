@@ -42,20 +42,21 @@
             </ul>
 
             <div class="dropdown ms-3">
-                <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img 
-                        src="https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg" 
-                        class="profile-picture-navbar" 
-                        alt="User Profile"
-                    >
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item active" href="profile.html">Profile</a></li>
-                    <li><a class="dropdown-item" href="#">Settings</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#" id="logout-button">Logout</a></li>
-                </ul>
-            </div>
+    <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <img 
+            src="https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg" 
+            
+            id="navbarProfileImage"  class="profile-picture-navbar" 
+            alt="User Profile"
+        >
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="profile.html">Profile</a></li>
+        <li><a class="dropdown-item active" href="settings.html">Settings</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="#" id="logout-button">Logout</a></li>
+    </ul>
+</div>
         </div>
     </div>
 </nav>
@@ -174,26 +175,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Fetch profile data and populate form
     // In frontend/profile.html
 
+// In the <script> tag of profile.html
+
 async function fetchProfile() {
     try {
-        // --- THIS IS THE CORRECTED FETCH CALL ---
         const response = await fetch('/api/users/profile', {
-            headers: {
-                'Authorization': `Bearer ${token}` // Add the Authorization header
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
-
-        if (!response.ok) {
-            // This will now catch the error if the token is invalid (e.g., 401 Unauthorized)
-            throw new Error(`Failed to fetch profile. Status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error('Failed to fetch profile.');
         
         const user = await response.json();
 
-        // This console.log will now work
-        console.log("Profile data from server:", user);
-
-        // Populate text fields
+        // --- THIS IS THE LINE THAT FIXES THE PROBLEM ---
+        // It finds the navbar image and sets its source to the user's profile picture URL
+        document.getElementById('navbarProfileImage').src = user.profile_image_url || 'https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg';
+        
+        // --- The rest of your function remains the same ---
         nameInput.value = user.name || '';
         emailInput.value = user.email || '';
         phoneInput.value = user.phone || '';
@@ -204,22 +201,20 @@ async function fetchProfile() {
         pincodeInput.value = user.pincode || '';
         skillsInput.value = user.skills || '';
         
-        // Initialize map with user's saved location, or get live location
         const userCoords = [user.latitude, user.longitude];
         if (user.latitude && user.longitude) {
             initMap(userCoords);
         } else {
             navigator.geolocation.getCurrentPosition(
                 (position) => initMap([position.coords.latitude, position.coords.longitude]),
-                () => initMap([12.3118, 76.6529]) // Fallback to Mysuru
+                () => initMap([12.3118, 76.6529]) // Fallback
             );
         }
     } catch (error) {
-        console.error(error); // Log the actual error to the console
         showAlert('Could not load profile data.', 'danger');
-        initMap([12.3118, 76.6529]); // Initialize map on error
-        }
+        initMap([12.3118, 76.6529]);
     }
+}
 
     // 3. Handle form submission to update profile
     form.addEventListener('submit', async (e) => {

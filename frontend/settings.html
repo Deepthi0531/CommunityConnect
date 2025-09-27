@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings - CommunityConnect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .profile-picture-navbar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .profile-picture-preview { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #eee; }
+        .accordion-button:not(.collapsed) { background-color: rgba(13, 110, 253, 0.1); }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="index.html">
+                <img src="favicon.ico" alt="Logo" style="width: 30px; height: 30px; margin-right: 10px;">
+                CommunityConnect
+            </a>
+
+            <div class="d-flex align-items-center ms-auto">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Home</a>
+                    </li>
+                </ul>
+
+                <div class="dropdown ms-3">
+    <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <img
+            src="https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg" 
+            
+            id="navbarProfileImage"  class="profile-picture-navbar"
+            alt="User Profile"
+        >
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="profile.html">Profile</a></li>
+        <li><a class="dropdown-item active" href="settings.html">Settings</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="#" id="logout-button">Logout</a></li>
+    </ul>
+</div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <h1 class="mb-4">Settings</h1>
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div id="alert-container-global"></div>
+                <div class="accordion" id="settingsAccordion">
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                Account Management
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#settingsAccordion">
+                            <div class="accordion-body">
+                                <form id="account-form">
+                                    <div class="text-center mb-4">
+                                        <img src="https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg" id="profile-preview" class="profile-picture-preview mb-2">
+                                        <input type="file" class="form-control" id="profile_image" name="profile_image" accept="image/*">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Name</label>
+                                        <input type="text" class="form-control" id="name" name="name" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="phone" class="form-label">Phone</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Save Account Info</button>
+                                </form>
+                                <hr>
+                                <h5 class="text-danger">Deactivate Account</h5>
+                                <p>This will permanently delete your account and all associated data.</p>
+                                <button class="btn btn-danger" id="deactivate-btn">Deactivate My Account</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                Security
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
+                            <div class="accordion-body">
+                                <form id="password-form">
+                                    <h5>Change Password</h5>
+                                    <div class="mb-3">
+                                        <label for="current_password" class="form-label">Current Password</label>
+                                        <input type="password" class="form-control" id="current_password" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="new_password" class="form-label">New Password</label>
+                                        <input type="password" class="form-control" id="new_password" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                        <input type="password" class="form-control" id="confirm_password" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Update Password</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                                Notifications
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
+                            <div class="accordion-body">
+                                <form id="notifications-form">
+                                    <h5>Email Notifications</h5>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notify_new_requests" name="notify_new_requests">
+                                        <label class="form-check-label" for="notify_new_requests">Notify me about new help requests in my area</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notify_responses" name="notify_responses">
+                                        <label class="form-check-label" for="notify_responses">Notify me when someone responds to my request</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notify_updates" name="notify_updates">
+                                        <label class="form-check-label" for="notify_updates">Send me weekly community updates</label>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary mt-3">Save Notification Settings</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login.html';
+        return;
+    }
+    const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                });
+            }
+
+    // --- Form Elements ---
+    const accountForm = document.getElementById('account-form');
+    const passwordForm = document.getElementById('password-form');
+    const notificationsForm = document.getElementById('notifications-form');
+    const deactivateBtn = document.getElementById('deactivate-btn');
+    const profilePreview = document.getElementById('profile-preview');
+
+    // --- Function to load all user and settings data ---
+    async function loadData() {
+        try {
+            const response = await fetch('/api/users/settings', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Failed to load settings.');
+            
+            const data = await response.json();
+            
+            // Populate Account Form
+            document.getElementById('navbarProfileImage').src = data.profile_image_url || 'https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg';
+            document.getElementById('name').value = data.name || '';
+            document.getElementById('phone').value = data.phone || '';
+            if (data.profile_image_url) {
+                profilePreview.src = data.profile_image_url;
+            }
+
+            // Populate Notifications Form
+            document.getElementById('notify_new_requests').checked = data.notify_new_requests;
+            document.getElementById('notify_responses').checked = data.notify_responses;
+            document.getElementById('notify_updates').checked = data.notify_updates;
+
+        } catch (error) {
+            showAlert(error.message, 'danger');
+        }
+    }
+
+    // --- Event Listeners for Forms ---
+
+    // 1. Account Form (with file upload)
+    accountForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(accountForm);
+        try {
+            const response = await fetch('/api/users/settings/account', {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message);
+            showAlert('Account info saved successfully!', 'success');
+            // Update navbar image if a new one was uploaded and saved
+            if (result.imageUrl) {
+                // You would need to give your navbar image an ID to update it here
+                // e.g., document.getElementById('navbarProfileImage').src = result.imageUrl;
+            }
+        } catch (error) {
+            showAlert(error.message, 'danger');
+        }
+    });
+
+    // 2. Password Form
+    passwordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const currentPassword = document.getElementById('current_password').value;
+        const newPassword = document.getElementById('new_password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+
+        if (newPassword !== confirmPassword) {
+            return showAlert('New passwords do not match.', 'danger');
+        }
+
+        try {
+            const response = await fetch('/api/users/settings/password', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ currentPassword, newPassword })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message);
+            showAlert(result.message, 'success');
+            passwordForm.reset();
+        } catch (error) {
+            showAlert(error.message, 'danger');
+        }
+    });
+
+    // 3. Notifications Form
+    notificationsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const settingsData = {
+            notify_new_requests: document.getElementById('notify_new_requests').checked,
+            notify_responses: document.getElementById('notify_responses').checked,
+            notify_updates: document.getElementById('notify_updates').checked,
+        };
+        try {
+            const response = await fetch('/api/users/settings/notifications', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(settingsData)
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message);
+            showAlert('Notification settings saved!', 'success');
+        } catch (error) {
+            showAlert(error.message, 'danger');
+        }
+    });
+
+    // --- Deactivate Button ---
+    deactivateBtn.addEventListener('click', () => {
+        if (confirm('Are you absolutely sure you want to deactivate your account? This action cannot be undone.')) {
+            // Logic to call DELETE /api/users/account endpoint would go here
+            console.log("Deactivating account...");
+        }
+    });
+    
+    // --- Helper function for alerts ---
+    function showAlert(message, type) {
+        const alertContainer = document.getElementById('alert-container-global');
+        alertContainer.innerHTML = `<div class="alert alert-${type}" role="alert">${message}</div>`;
+        window.scrollTo(0, 0);
+    }
+    
+    // Initial data load
+    loadData();
+});
+</script>
+</body>
+</html>

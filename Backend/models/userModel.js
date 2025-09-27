@@ -56,7 +56,34 @@ const User = {
         userData.latitude, userData.longitude,
         id
     ], callback);
+ },
+
+    getSettingsByUserId: (userId, callback) => {
+    const sql = `
+        SELECT u.name, u.phone, u.profile_image_url, s.* FROM users u
+        LEFT JOIN user_settings s ON u.id = s.user_id
+        WHERE u.id = ?
+    `;
+    db.query(sql, [userId], (err, results) => {
+        if (err) return callback(err, null);
+        callback(null, results[0]);
+    });
+},
+updateAccount: (id, data, callback) => {
+    // Dynamically build query based on what data is provided
+    let sql = 'UPDATE users SET name = ?, phone = ?';
+    const params = [data.name, data.phone];
+    if (data.profile_image_url) {
+        sql += ', profile_image_url = ?';
+        params.push(data.profile_image_url);
     }
+    sql += ' WHERE id = ?';
+    params.push(id);
+    db.query(sql, params, callback);
+},
+updatePassword: (id, hashedPassword, callback) => {
+    db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, id], callback);
+}
 };
 
 module.exports = User;
