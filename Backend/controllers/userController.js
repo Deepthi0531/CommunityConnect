@@ -1,7 +1,10 @@
 const User = require('../models/userModel');
+const Settings = require('../models/settingsModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 
+// Register user
 const registerUser = (req, res) => {
   const { name, email, role, password, phone, latitude, longitude } = req.body;
 
@@ -52,49 +55,138 @@ const registerUser = (req, res) => {
   });
 };
 
-
+// Login user and return JWT
 const loginUser = (req, res) => {
   const { email, password } = req.body;
-
   if (!email || !password) {
     return res.status(400).json({ message: 'Please provide email and password' });
   }
-
   User.findByEmail(email, (err, user) => {
+    if (err || !user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    bcrypt.compare(password, user.password, (err, isMatch) => {
+      if (err || !isMatch) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+      const token = jwt.sign({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        profile_image_url: user.profile_image_url
+      }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '30d' });
+      res.json({
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+        token: token,
+      });
+    });
+  });
+};
+
+// Get user profile
+const getUserProfile = async (req, res) => {
+  try {
+    const user = await new Promise((resolve, reject) => {
+      User.findById(req.user.id, (err, user) => {
+        if (err) reject(err);
+        resolve(user);
+      });
+    });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error("SERVER ERROR IN getUserProfile:", error);
+    res.status(500).json({ message: 'Server error while fetching profile' });
+  }
+};
+
+// Update user profile
+const updateUserProfile = async (req, res) => {
+  try {
+    const updatedData = req.body;
+    const result = await new Promise((resolve, reject) => {
+      User.update(req.user.id, updatedData, (err, result) => {
+        if (err) reject(err);
+        resolve(result);
+      });
+    });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ message: 'Profile updated successfully' });
+  } catch (error) {
+    console.error("SERVER ERROR IN updateUserProfile:", error);
+    res.status(500).json({ message: 'Server error while updating profile' });
+  }
+};
+
+// Get combined user profile and settings
+const getUserSettings = (req, res) => {
+  User.getSettingsByUserId(req.user.id, (err, settings) => {
     if (err) {
-      console.error('Find user error:', err);
       return res.status(500).json({ message: 'Server error' });
     }
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+    if (!settings) {
+      return res.status(404).json({ message: 'Settings not found for user' });
     }
+    res.json(settings);
+  });
+};
 
-    bcrypt.compare(password, user.password, (err, isMatch) => {
-      if (err) {
-        console.error('Password comparison error:', err);
-        return res.status(500).json({ message: 'Server error during password comparison' });
-      }
-      if (isMatch) {
-        const token = jwt.sign(
-          { id: user.id, name: user.name, email: user.email },
-          process.env.JWT_SECRET || 'your_jwt_secret',
-          { expiresIn: '30d' }
-        );
+// Update user account info (name, phone, profile pic)
+const updateAccountSettings = (req, res) => {
+  const { name, phone } = req.body;
+  let imageUrl = null;
+  if (req.file) {
+    imageUrl = `/uploads/${req.file.filename}`;
+  }
+  User.updateAccount(req.user.id, { name, phone, profile_image_url: imageUrl }, (err, result) => {
+    if (err) {
+      if (req.file) fs.unlink(req.file.path, () => {}); // Clean up uploaded file on error
+      return res.status(500).json({ message: 'Failed to update account' });
+    }
+    res.json({ message: 'Account info updated!', imageUrl });
+  });
+};
 
-        res.json({
-          _id: user.id,
-          name: user.name,
-          email: user.email,
-          token: token,
+// Update user password
+const updatePassword = (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  User.findById(req.user.id, (err, user) => {
+    if (err || !user) return res.status(500).json({ message: 'User not found' });
+
+    bcrypt.compare(currentPassword, user.password, (err, isMatch) => {
+      if (err || !isMatch) return res.status(401).json({ message: 'Incorrect current password' });
+
+      bcrypt.hash(newPassword, 10, (err, hashedPassword) => {
+        User.updatePassword(req.user.id, hashedPassword, (err, result) => {
+          if (err) return res.status(500).json({ message: 'Failed to update password' });
+          res.json({ message: 'Password updated successfully' });
         });
-      } else {
-        res.status(401).json({ message: 'Invalid email or password' });
-      }
+      });
     });
+  });
+};
+
+// Update user notification preferences
+const updateNotificationSettings = (req, res) => {
+  Settings.update(req.user.id, req.body, (err, result) => {
+    if (err) return res.status(500).json({ message: 'Failed to update settings' });
+    res.json({ message: 'Notification settings updated' });
   });
 };
 
 module.exports = {
   registerUser,
   loginUser,
+  getUserProfile,
+  updateUserProfile,
+  getUserSettings,
+  updateAccountSettings,
+  updatePassword,
+  updateNotificationSettings,
 };
