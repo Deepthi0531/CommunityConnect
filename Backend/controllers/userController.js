@@ -91,7 +91,52 @@ const loginUser = (req, res) => {
   });
 };
 
+const getUserProfile = async (req, res) => {
+    try {
+        // We are using a callback, so we can wrap it in a Promise for async/await
+        const user = await new Promise((resolve, reject) => {
+            User.findById(req.user.id, (err, user) => {
+                if (err) reject(err);
+                resolve(user);
+            });
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json(user);
+
+    } catch (error) {
+        console.error("SERVER ERROR IN getUserProfile:", error); // This will now log the error
+        res.status(500).json({ message: 'Server error while fetching profile' });
+    }
+};
+
+const updateUserProfile = async (req, res) => {
+    try {
+        const updatedData = req.body;
+
+        const result = await new Promise((resolve, reject) => {
+            User.update(req.user.id, updatedData, (err, result) => {
+                if (err) reject(err);
+                resolve(result);
+            });
+        });
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json({ message: 'Profile updated successfully' });
+
+    } catch (error) {
+        console.error("SERVER ERROR IN updateUserProfile:", error); // This will now log the error
+        res.status(500).json({ message: 'Server error while updating profile' });
+    }
+};
+
 module.exports = {
   registerUser,
   loginUser,
+  getUserProfile,
+  updateUserProfile,
 };
