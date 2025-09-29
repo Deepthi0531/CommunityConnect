@@ -182,63 +182,44 @@ const updateNotificationSettings = (req, res) => {
     res.json({ message: 'Notification settings updated' });
   });
 };
-const forgotPassword = async (req, res) => {
-    try {
-        const { email } = req.body;
-        const user = await new Promise((resolve, reject) => {
-            User.findByEmail(email, (err, user) => err ? reject(err) : resolve(user));
-        });
-
-        if (!user) {
+const forgotPassword = (req, res) => {
+    const { email } = req.body;
+    User.findByEmail(email, (err, user) => {
+        if (err || !user) {
             return res.status(404).json({ message: 'User with that email not found.' });
         }
 
         const token = crypto.randomBytes(20).toString('hex');
-        const expires = new Date(Date.now() + 3600000); // 1 hour
+        const expires = new Date(Date.now() + 3600000); // 1 hour from now
 
-        await new Promise((resolve, reject) => {
-            User.saveResetToken(email, token, expires, (err, result) => err ? reject(err) : resolve(result));
+        User.saveResetToken(email, token, expires, (err, result) => {
+            if (err) return res.status(500).json({ message: 'Error saving reset token.' });
+
+            // This simpler transporter uses your new App Password
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS,
+                },
+            });
+
+            const mailOptions = {
+                to: user.email,
+                from: process.env.EMAIL_USER,
+                subject: 'CommunityConnect Password Reset',
+                text: `Click this link to reset your password: http://${req.headers.host}/reset-password.html?token=${token}`,
+            };
+
+            transporter.sendMail(mailOptions, (err) => {
+                if (err) {
+                    console.error('Email sending error:', err);
+                    return res.status(500).json({ message: 'Error sending email.' });
+                }
+                res.status(200).json({ message: 'An email has been sent with further instructions.' });
+            });
         });
-
-        // --- OAuth 2.0 Setup ---
-        const oAuth2Client = new google.auth.OAuth2(
-            process.env.CLIENT_ID,
-            process.env.CLIENT_SECRET,
-            "https://developers.google.com/oauthplayground" // Redirect URI
-        );
-
-        oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
-
-        const accessToken = await oAuth2Client.getAccessToken();
-
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                type: 'OAuth2',
-                user: process.env.EMAIL_USER,
-                clientId: process.env.CLIENT_ID,
-                clientSecret: process.env.CLIENT_SECRET,
-                refreshToken: process.env.REFRESH_TOKEN,
-                accessToken: accessToken,
-            },
-        });
-        
-        const mailOptions = {
-            from: `CommunityConnect <${process.env.EMAIL_USER}>`,
-            to: user.email,
-            subject: 'Password Reset Request',
-            text: `Please click the following link to reset your password: http://${req.headers.host}/reset-password.html?token=${token}`,
-            html: `<p>Please click the following link to reset your password: <a href="http://${req.headers.host}/reset-password.html?token=${token}">Reset Password</a></p>`,
-        };
-
-        await transporter.sendMail(mailOptions);
-        
-        res.status(200).json({ message: 'An email has been sent with further instructions.' });
-
-    } catch (error) {
-        console.error('FORGOT PASSWORD ERROR:', error);
-        res.status(500).json({ message: 'Error processing request.' });
-    }
+    });
 };
 
 const resetPassword = (req, res) => {

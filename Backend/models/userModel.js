@@ -34,7 +34,7 @@ const User = {
   // Find user by ID
   findById: (id, callback) => {
     const sql = `SELECT
-      id, name, email, phone, skills,
+      id, name, email, phone, skills,profile_image_url,
       address_house_no, address_line1, address_line2,
       address_street, pincode, latitude, longitude
       FROM users WHERE id = ?`;

@@ -64,7 +64,9 @@
 
                 <div class="dropdown ms-3">
                     <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg" class="profile-picture-navbar" alt="User Profile">
+                      <img src="https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg" 
+                      id="navbarProfileImage" class="profile-picture-navbar"
+                      alt="User Profile">
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="profile.html">Profile</a></li>
@@ -143,6 +145,16 @@
             // If token exists, show the user navbar
             guestNav.classList.add('d-none'); // Hide guest view
             userNav.classList.remove('d-none'); // Show user view
+
+            try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const navbarImage = document.getElementById('navbarProfileImage');
+            if (navbarImage) {
+                navbarImage.src = payload.profile_image_url || 'https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg';
+            }
+        } catch (e) {
+            console.error("Failed to decode token for navbar image:", e);
+        }
         }
 
         if (logoutButton) {
