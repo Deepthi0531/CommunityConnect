@@ -33,11 +33,11 @@ const User = {
 
   // Find user by ID
   findById: (id, callback) => {
-    const sql = `SELECT 
-                  id, name, email, phone, skills,
-                  address_house_no, address_line1, address_line2,
-                  address_street, pincode, latitude, longitude
-                  FROM users WHERE id = ?`;
+    const sql = `SELECT
+      id, name, email, phone, skills,
+      address_house_no, address_line1, address_line2,
+      address_street, pincode, latitude, longitude
+      FROM users WHERE id = ?`;
     db.query(sql, [id], (err, results) => {
       if (err) return callback(err, null);
       callback(null, results[0]);
@@ -46,10 +46,10 @@ const User = {
 
   // Update user full profile
   update: (id, userData, callback) => {
-    const sql = `UPDATE users SET 
-      name = ?, phone = ?, skills = ?, 
-      address_house_no = ?, address_line1 = ?, address_line2 = ?, 
-      address_street = ?, pincode = ?, latitude = ?, longitude = ? 
+    const sql = `UPDATE users SET
+      name = ?, phone = ?, skills = ?,
+      address_house_no = ?, address_line1 = ?, address_line2 = ?,
+      address_street = ?, pincode = ?, latitude = ?, longitude = ?
       WHERE id = ?`;
     db.query(sql, [
       userData.name, userData.phone, userData.skills,
@@ -89,6 +89,26 @@ const User = {
   // Update user password
   updatePassword: (id, hashedPassword, callback) => {
     db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, id], callback);
+  },
+
+  saveResetToken: (email, token, expires, callback) => {
+    const sql = "UPDATE users SET reset_password_token = ?, reset_password_expires = ? WHERE email = ?";
+    db.query(sql, [token, expires, email], callback);
+  },
+
+  findByResetToken: (token, callback) => {
+    // Check if token exists and is not expired
+    const sql = "SELECT * FROM users WHERE reset_password_token = ? AND reset_password_expires > NOW()";
+    db.query(sql, [token], (err, results) => {
+        if (err) return callback(err, null);
+        callback(null, results[0]);
+    });
+  },
+
+  updatePasswordAndClearToken: (id, hashedPassword, callback) => {
+    // Update password and clear the reset token fields
+    const sql = "UPDATE users SET password = ?, reset_password_token = NULL, reset_password_expires = NULL WHERE id = ?";
+    db.query(sql, [hashedPassword, id], callback);
   }
 };
 

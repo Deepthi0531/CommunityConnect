@@ -3,6 +3,9 @@ const Settings = require('../models/settingsModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+const { google } = require('googleapis');
 
 // Register user
 const registerUser = (req, res) => {
@@ -179,6 +182,83 @@ const updateNotificationSettings = (req, res) => {
     res.json({ message: 'Notification settings updated' });
   });
 };
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await new Promise((resolve, reject) => {
+            User.findByEmail(email, (err, user) => err ? reject(err) : resolve(user));
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User with that email not found.' });
+        }
+
+        const token = crypto.randomBytes(20).toString('hex');
+        const expires = new Date(Date.now() + 3600000); // 1 hour
+
+        await new Promise((resolve, reject) => {
+            User.saveResetToken(email, token, expires, (err, result) => err ? reject(err) : resolve(result));
+        });
+
+        // --- OAuth 2.0 Setup ---
+        const oAuth2Client = new google.auth.OAuth2(
+            process.env.CLIENT_ID,
+            process.env.CLIENT_SECRET,
+            "https://developers.google.com/oauthplayground" // Redirect URI
+        );
+
+        oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+
+        const accessToken = await oAuth2Client.getAccessToken();
+
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                type: 'OAuth2',
+                user: process.env.EMAIL_USER,
+                clientId: process.env.CLIENT_ID,
+                clientSecret: process.env.CLIENT_SECRET,
+                refreshToken: process.env.REFRESH_TOKEN,
+                accessToken: accessToken,
+            },
+        });
+        
+        const mailOptions = {
+            from: `CommunityConnect <${process.env.EMAIL_USER}>`,
+            to: user.email,
+            subject: 'Password Reset Request',
+            text: `Please click the following link to reset your password: http://${req.headers.host}/reset-password.html?token=${token}`,
+            html: `<p>Please click the following link to reset your password: <a href="http://${req.headers.host}/reset-password.html?token=${token}">Reset Password</a></p>`,
+        };
+
+        await transporter.sendMail(mailOptions);
+        
+        res.status(200).json({ message: 'An email has been sent with further instructions.' });
+
+    } catch (error) {
+        console.error('FORGOT PASSWORD ERROR:', error);
+        res.status(500).json({ message: 'Error processing request.' });
+    }
+};
+
+const resetPassword = (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    User.findByResetToken(token, (err, user) => {
+        if (err || !user) {
+            return res.status(400).json({ message: 'Password reset token is invalid or has expired.' });
+        }
+
+        // Hash new password and save it
+        bcrypt.hash(password, 10, (err, hashedPassword) => {
+            User.updatePasswordAndClearToken(user.id, hashedPassword, (err, result) => {
+                if (err) return res.status(500).json({ message: 'Error updating password.' });
+                res.status(200).json({ message: 'Password has been updated successfully.' });
+            });
+        });
+    });
+};
 
 module.exports = {
   registerUser,
@@ -189,4 +269,6 @@ module.exports = {
   updateAccountSettings,
   updatePassword,
   updateNotificationSettings,
+  forgotPassword,
+  resetPassword,
 };

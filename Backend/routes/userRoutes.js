@@ -16,4 +16,7 @@ router.put('/settings/account', protect, upload.single('profile_image'), userCon
 router.put('/settings/password', protect, userController.updatePassword);
 router.put('/settings/notifications', protect, userController.updateNotificationSettings);
 
+router.post('/forgot-password', userController.forgotPassword);
+router.post('/reset-password/:token', userController.resetPassword);
+
 module.exports = router;

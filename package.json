@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "helmet": "^8.1.0"
+    "helmet": "^8.1.0",
+    "nodemailer": "^7.0.6"
   }
 }
