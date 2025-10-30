@@ -5,8 +5,8 @@ const Volunteer = {
   create: (volunteerData, callback) => {
     const sql = `
       INSERT INTO volunteers 
-        (name, email, phone, availability, skills, latitude, longitude) 
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+        (name, email, phone, password, availability, skills, latitude, longitude) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
     db.query(
       sql,
@@ -14,6 +14,7 @@ const Volunteer = {
         volunteerData.name,
         volunteerData.email,
         volunteerData.phone,
+        volunteerData.password,
         volunteerData.availability,
         volunteerData.skills,
         volunteerData.latitude || null,
@@ -34,6 +35,19 @@ const Volunteer = {
       callback(null, results[0] || null);
     });
   },
+
+  findNearby: (lat, lon, radius, callback) => {
+    // Finds volunteers within a radius, using the Haversine formula
+    // Assumes volunteers have a 'latitude', 'longitude', and 'user_id'
+    const sql = `
+      SELECT *, ( 6371 * acos( cos( radians(?) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitude ) ) ) ) AS distance
+      FROM volunteers
+      WHERE availability = 'Available' -- Only find available volunteers
+      HAVING distance < ?
+      ORDER BY distance;
+    `;
+    db.query(sql, [lat, lon, lat, radius], callback);
+  }
 };
 
 module.exports = Volunteer;

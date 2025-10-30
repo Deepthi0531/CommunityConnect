@@ -13,7 +13,7 @@ const protect = (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
       
       // Attach user to the request (IMPORTANT)
-      req.user = { id: decoded.id }; // Or get full user from DB if needed
+      req.user = decoded; // Or get full user from DB if needed
 
       next(); // Move to the next function
     } catch (error) {

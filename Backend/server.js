@@ -1,6 +1,11 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const path = require('path');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
+
+// Import all route files
 const userRoutes = require('./routes/userRoutes');
 const requestRoutes = require('./routes/requests');
 const volunteerRoutes = require('./routes/volunteer');
@@ -10,43 +15,53 @@ require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const httpServer = createServer(app);
 
-// Enable CORS middleware
-app.use(cors());
-
-// Use built-in middleware to parse JSON request bodies
-app.use(express.json());
-
-// Debug middleware to log incoming request bodies for troubleshooting
-app.use((req, res, next) => {
-  console.log(`Incoming ${req.method} ${req.url} body:`, req.body);
-  next();
+const io = new Server(httpServer, {
+    cors: {
+        origin: "http://localhost:5000",
+        methods: ["GET", "POST"]
+    }
+});
+app.set('io', io);
+io.on('connection', (socket) => {
+    console.log('A user connected with socket ID:', socket.id);
+    socket.on('join-room', (userId) => {
+        socket.join(String(userId));
+        console.log(`User ${userId} joined their private room.`);
+    });
+    socket.on('disconnect', () => {
+        console.log('A user disconnected');
+    });
 });
 
-// Serve static frontend files
+// Middleware
+app.use(cors());
+app.use(helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://cdn.jsdelivr.net", "https://unpkg.com", "https://cdn.socket.io"],
+      styleSrc: ["'self'", "https://cdn.jsdelivr.net", "https://unpkg.com", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https://*.tile.openstreetmap.org"],
+    },
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
-
-// Serve uploaded images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Security: Content Security Policy header
-app.use((req, res, next) => {
-  res.setHeader("Content-Security-Policy", "script-src 'self' 'unsafe-eval';");
-  next();
-});
-
-// API routes
+// API Routes
 app.use("/api/users", userRoutes);
 app.use("/api/requests", requestRoutes);
-app.use('/api/volunteer', volunteerRoutes);
+app.use('/api/volunteers', volunteerRoutes);
 app.use('/api/emergency', emergencyRoutes);
 
-// Catch-all route to serve frontend index.html on unmatched GET requests
+// Catch-all route (MUST be after API routes)
 app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Start Server
+httpServer.listen(PORT, () => {
+    console.log(`✅ Server running on port ${PORT}`);
 });

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Volunteer Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="card p-4 shadow-lg" style="width: 400px;">
+            <h3 class="text-center mb-3">Volunteer Login</h3>
+            <div id="login-error-message" class="alert alert-danger d-none" role="alert"></div>
+            
+            <form id="login-form">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+            
+            <div class="text-center mt-4 border-top pt-3">
+                <p class="mb-0">Don't have an account?</p>
+                <a href="volunteer.html" class="btn btn-outline-success mt-2">Register as a Volunteer</a>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('login-form');
+    const loginErrorMessage = document.getElementById('login-error-message');
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            loginErrorMessage.classList.add('d-none'); // Hide error on new submit
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                loginErrorMessage.textContent = 'Please enter email and password.';
+                loginErrorMessage.classList.remove('d-none');
+                return;
+            }
+
+            try {
+                // Send to the volunteer login endpoint
+                const response = await fetch('http://localhost:5000/api/volunteers/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    alert('Login successful!');
+                    window.location.href = '/dashboard.html';
+                } else {
+                    loginErrorMessage.textContent = data.message || 'Login failed.';
+                    loginErrorMessage.classList.remove('d-none');
+                }
+            } catch (error) {
+                loginErrorMessage.textContent = 'An error occurred. Please try again.';
+                loginErrorMessage.classList.remove('d-none');
+            }
+        });
+    }
+});
+</script>
+</body>
+</html>
