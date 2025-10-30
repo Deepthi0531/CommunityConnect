@@ -140,98 +140,121 @@
 
   <!-- Page Script -->
   <script>
-  const token = localStorage.getItem('token');
-  let map, marker;
+    const token = localStorage.getItem('token');
+    let map, marker;
+    const defaultCoords = [12.2958, 76.6394]; // Mysuru default
 
-  document.addEventListener("DOMContentLoaded", () => {
-    // Mysuru default
-    const start = [12.2958, 76.6394];
-    map = L.map('map').setView(start, 13);
+    document.addEventListener("DOMContentLoaded", () => {
+        
+        map = L.map('map').setView(defaultCoords, 13); // Set default view first
 
-    // OSM tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
 
-    // Add draggable marker at start location
-    marker = L.marker(start, { draggable: true }).addTo(map);
-    setLatLng(start[0], start[1]);
+        // Add draggable marker at the default location
+        marker = L.marker(defaultCoords, { draggable: true }).addTo(map);
+        setLatLng(defaultCoords[0], defaultCoords[1]);
 
-    // Place marker on click
-    map.on('click', function(e) {
-      marker.setLatLng(e.latlng);
-      setLatLng(e.latlng.lat, e.latlng.lng);
-    });
+        // --- NEW: ATTEMPT TO GET LIVE LOCATION ---
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // On success, update the map and marker to the live location
+                    const liveCoords = [position.coords.latitude, position.coords.longitude];
+                    map.setView(liveCoords, 13);
+                    marker.setLatLng(liveCoords);
+                    setLatLng(liveCoords[0], liveCoords[1]);
+                },
+                (error) => {
+                    // If user blocks or it fails, log it and keep the Mysuru default
+                    console.warn("Could not get geolocation:", error.message);
+                }
+            );
+        } else {
+            console.log("Geolocation is not supported by this browser.");
+        }
+        // --- END OF NEW CODE ---
 
-    // Update coordinates on marker drag
-    marker.on('dragend', function(e) {
-      const pos = marker.getLatLng();
-      setLatLng(pos.lat, pos.lng);
-    });
-
-    function setLatLng(lat, lng) {
-      document.getElementById("latitude").value = lat.toFixed(6);
-      document.getElementById("longitude").value = lng.toFixed(6);
-    }
-
-    // Form logic
-    const form = document.getElementById("volunteerForm");
-    const alertBox = document.getElementById("formAlert");
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      if (!form.checkValidity()) {
-        showAlert("Please fill all required fields.", "danger");
-        form.classList.add("was-validated");
-        return;
-      }
-
-      const payload = {
-        name: form.name.value.trim(),
-        email: form.email.value.trim(),
-        phone: form.phone.value.trim(),
-        availability: form.availability.value,
-        skills: form.skills.value.trim(),
-        latitude: form.latitude.value,
-        longitude: form.longitude.value,
-      };
-
-      try {
-        const response = await fetch('http://localhost:5000/api/volunteer/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token, // Properly nested inside headers
-          },
-          body: JSON.stringify(payload),
+        // Place marker on click
+        map.on('click', function(e) {
+            marker.setLatLng(e.latlng);
+            setLatLng(e.latlng.lat, e.latlng.lng);
         });
 
-        const data = await response.json();
+        // Update coordinates on marker drag
+        marker.on('dragend', function(e) {
+            const pos = marker.getLatLng();
+            setLatLng(pos.lat, pos.lng);
+        });
 
-        if (response.ok) {
-          showAlert("You have been registered as a volunteer!", "success");
-          form.reset();
-        } else {
-          showAlert(data.message || "Registration failed.", "danger");
+        function setLatLng(lat, lng) {
+            document.getElementById("latitude").value = lat.toFixed(6);
+            document.getElementById("longitude").value = lng.toFixed(6);
         }
-      } catch (error) {
-        showAlert("An error occurred. Please try again.", "danger");
-        console.error("Registration error:", error);
-      }
-    });
 
-    function showAlert(message, type) {
-      if (!message) {
-        alertBox.className = "alert d-none";
-        alertBox.textContent = "";
-        return;
-      }
-      alertBox.className = "alert alert-" + type;
-      alertBox.textContent = message;
-    }
-  });
+        // Form logic
+        const form = document.getElementById("volunteerForm");
+        const alertBox = document.getElementById("formAlert");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            if (!form.checkValidity()) {
+                showAlert("Please fill all required fields.", "danger");
+                form.classList.add("was-validated");
+                return;
+            }
+
+            const payload = {
+                name: form.name.value.trim(),
+                email: form.email.value.trim(),
+                phone: form.phone.value.trim(),
+                availability: form.availability.value,
+                skills: form.skills.value.trim(),
+                latitude: form.latitude.value,
+                longitude: form.longitude.value,
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/api/volunteers/register', { // Updated API path
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token,
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert("You have been registered as a volunteer!", "success");
+                    form.reset();
+                    // Reset marker to default after submission
+                    map.setView(defaultCoords, 13);
+                    marker.setLatLng(defaultCoords);
+                    setLatLng(defaultCoords[0], defaultCoords[1]);
+                } else {
+                    showAlert(data.message || "Registration failed.", "danger");
+                }
+            } catch (error) {
+                showAlert("An error occurred. Please try again.", "danger");
+                console.error("Registration error:", error);
+            }
+        });
+
+        function showAlert(message, type) {
+            if (!message) {
+                alertBox.className = "alert d-none";
+                alertBox.textContent = "";
+                return;
+            }
+            alertBox.className = "alert alert-" + type;
+            alertBox.textContent = message;
+        }
+    });
 </script>
 
 
