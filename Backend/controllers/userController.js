@@ -6,6 +6,8 @@ const fs = require('fs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
+require('dotenv').config();
+
 
 // Register user
 const registerUser = (req, res) => {
@@ -59,11 +61,62 @@ const registerUser = (req, res) => {
 };
 
 // Login user and return JWT
-const loginUser = (req, res) => {
+const loginUser = async(req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ message: 'Please provide email and password' });
   }
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@gmail.com';
+  const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH; // Removed the '|| 'hash'' fallback for security
+  // --- End of relevant admin login variables ---
+
+  // Check if admin login
+  if (email === ADMIN_EMAIL) {
+    if (!ADMIN_PASSWORD_HASH || ADMIN_PASSWORD_HASH === 'hash') {
+       console.error("ADMIN_PASSWORD_HASH is not configured correctly in .env");
+       return res.status(500).json({ message: 'Admin setup error: Password hash missing.' });
+    }
+
+    try {
+      // bcrypt.compare checks the plain text password against the stored hash
+      const isMatch = await bcrypt.compare(password, ADMIN_PASSWORD_HASH); 
+
+      if (!isMatch) {
+        return res.status(401).json({ message: 'Invalid admin credentials' });
+      }
+      
+      const token = jwt.sign(
+        { id: 'admin_id', email: ADMIN_EMAIL, name: 'Admin', role: 'admin' }, // Added role for better token data
+        process.env.JWT_SECRET || 'your_jwt_secret',
+        { expiresIn: '30d' }
+      );
+      
+      return res.json({
+        _id: 'admin_id',
+        name: 'Admin',
+        email: ADMIN_EMAIL,
+        token,
+        redirectUrl: 'http://localhost:5000/admin.html',
+      });
+    } catch (error) {
+      console.error('Server error during admin login comparison:', error);
+      return res.status(500).json({ message: 'Server error during admin login' });
+    }
+  }
+
+// CHANGE 'your_admin_password_here' to the password you want for your admin login
+const adminPassword = 'admin@123'; 
+
+bcrypt.hash(adminPassword, 10)
+  .then(hash => {
+    console.log('--- Copy this hash and paste it into ADMIN_PASSWORD_HASH in your .env file ---');
+    console.log(hash);
+    console.log('-------------------------------------------------------------------------------');
+  })
+  .catch(err => {
+    console.error('Error hashing password:', err);
+  });
+
   User.findByEmail(email, (err, user) => {
     if (err || !user) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -240,6 +293,14 @@ const resetPassword = (req, res) => {
         });
     });
 };
+
+
+
+ // replace with actual bcrypt hash
+
+
+
+  
 
 module.exports = {
   registerUser,

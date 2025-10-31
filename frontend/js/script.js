@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     localStorage.setItem('token', data.token);
                     alert('Login successful!');
-                    window.location.href = '/dashboard.html';
+                   window.location.href = data.redirectUrl || 'http://localhost:5000/index.html';
                 } else {
                     if (loginErrorMessage) loginErrorMessage.textContent = data.message || 'Login failed.';
                 }
