@@ -132,7 +132,7 @@
   
 ></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <!-- Initialize Leaflet Map -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -183,6 +183,42 @@
 
     // Initialize map after DOM content is loaded
     document.addEventListener('DOMContentLoaded', initMap);
+
+    // for message socket.io
+document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    // Connect to the Socket.IO server
+    const socket = io("http://localhost:5000"); // Your backend URL
+
+    // Decode token to get user ID
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const userId = payload.id;
+
+    // Tell the server to put this socket in a room named after the user ID
+    socket.emit('join-room', userId);
+
+    // --- This is where the magic happens ---
+    // Listen for new help requests (if you are a volunteer)
+    socket.on('new-help-request', (requestData) => {
+        // Show a pop-up to the volunteer
+        if (confirm(`${requestData.name} from ${requestData.location} needs help. Do you want to accept?`)) {
+            socket.emit('request-accepted', { requestId: requestData.id, volunteerId: userId });
+        } else {
+            // Do nothing or emit a 'request-rejected' event
+        }
+    });
+
+    // Listen for updates on your own request
+    socket.on('request-timeout', (data) => {
+        alert("Sorry, no volunteer is accepting your request at this time.");
+    });
+
+    socket.on('your-request-accepted', (data) => {
+        alert(`A volunteer has accepted your request!`);
+    });
+});
   </script>
 
   <script src="js/script.js"></script>

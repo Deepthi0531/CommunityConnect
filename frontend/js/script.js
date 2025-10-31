@@ -6,11 +6,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginErrorMessage = document.getElementById('login-error-message');
     const registerErrorMessage = document.getElementById('register-error-message');
 
-    // --- LOGIN FORM HANDLER ---
+    // --- LOGIN FORM HANDLER (FOR USERS & VOLUNTEERS) ---
     if (loginForm) {
         loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             if (loginErrorMessage) loginErrorMessage.textContent = '';
+
+            // --- 1. CHECK THE URL FOR A PARAMETER ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const loginAs = urlParams.get('as') || 'user'; // Defaults to 'user'
+
+            // --- 2. DETERMINE THE API ENDPOINT ---
+            let apiEndpoint = '';
+            if (loginAs === 'volunteer') {
+                apiEndpoint = 'http://localhost:5000/api/volunteers/login';
+            } else {
+                apiEndpoint = 'http://localhost:5000/api/users/login';
+            }
 
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
@@ -21,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const response = await fetch('http://localhost:5000/api/users/login', {
+                // --- 3. SEND THE REQUEST TO THE CORRECT ENDPOINT ---
+                const response = await fetch(apiEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password }),
@@ -32,7 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     localStorage.setItem('token', data.token);
                     alert('Login successful!');
+<<<<<<< HEAD
                    window.location.href = data.redirectUrl || 'http://localhost:5000/index.html';
+=======
+                    window.location.href = '/dashboard.html'; // Both users and volunteers go to the dashboard
+>>>>>>> upstream/main
                 } else {
                     if (loginErrorMessage) loginErrorMessage.textContent = data.message || 'Login failed.';
                 }
@@ -42,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- REGISTRATION FORM HANDLER ---
+    // --- REGISTRATION FORM HANDLER (FOR USERS ONLY) ---
     if (registerForm) {
         registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();

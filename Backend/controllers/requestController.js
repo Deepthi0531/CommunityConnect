@@ -1,4 +1,5 @@
 const Request = require("../models/requestModel");
+const Volunteer = require("../models/volunteerModel");
 const fs = require("fs");
 const path = require("path");
 
@@ -6,30 +7,18 @@ const path = require("path");
 const createRequest = (req, res) => {
   try {
     const {
-      title,
-      description,
-      category,
-      contact,
-      address,
-      latitude,
-      longitude,
-      urgency,
+      title, description, category, contact, address, latitude, longitude, urgency,
     } = req.body;
 
     if (!title || !description || !category || !contact || !latitude || !longitude || !urgency) {
-      // If a file was uploaded but fields are missing, remove it
-      if (req.file) {
-        fs.unlink(req.file.path, () => {});
-      }
+      if (req.file) fs.unlink(req.file.path, () => {});
       return res.status(400).json({ message: "Required fields missing" });
     }
 
     const latNum = Number(latitude);
     const lngNum = Number(longitude);
     if (isNaN(latNum) || isNaN(lngNum)) {
-      if (req.file) {
-        fs.unlink(req.file.path, () => {});
-      }
+      if (req.file) fs.unlink(req.file.path, () => {});
       return res.status(400).json({ message: "Invalid latitude or longitude" });
     }
 
@@ -38,19 +27,14 @@ const createRequest = (req, res) => {
       imageUrl = `/uploads/${req.file.filename}`;
     }
 
-    // Ensure req.user exists from auth middleware
+    // This check is still valid
     if (!req.user || !req.user.id) {
-      if (req.file) {
-        fs.unlink(req.file.path, () => {});
-      }
+      if (req.file) fs.unlink(req.file.path, () => {});
       return res.status(401).json({ message: "Unauthorized: User info missing" });
     }
 
     const newRequest = {
-      title,
-      description,
-      category,
-      contact,
+      title, description, category, contact,
       address: address || null,
       latitude: latNum,
       longitude: lngNum,
@@ -63,13 +47,49 @@ const createRequest = (req, res) => {
     Request.create(newRequest, (err, result) => {
       if (err) {
         console.error("Create request DB error:", err);
-        if (req.file) {
-          fs.unlink(req.file.path, () => {});
-        }
+        if (req.file) fs.unlink(req.file.path, () => {});
         return res.status(500).json({ message: "Error creating request", error: err.message });
       }
 
-      res.status(201).json({ message: "Request created successfully", requestId: result.insertId });
+      // --- Real-time logic starts here ---
+      const requestId = result.insertId;
+      const requesterName = req.user.name; // This will now work
+      const requesterLocation = req.body.address || 'nearby';
+      const io = req.app.get('io');
+
+      // Find nearby volunteers
+      Volunteer.findNearby(req.body.latitude, req.body.longitude, 5, (err, volunteers) => {
+        if (err || !volunteers) {
+          console.error("Could not find nearby volunteers:", err);
+        } else {
+          // Emit to all nearby volunteers
+          volunteers.forEach(volunteer => {
+            // Use String() for reliable room naming
+            io.to(String(volunteer.user_id)).emit('new-help-request', { 
+              id: requestId,
+              name: requesterName,
+              location: requesterLocation,
+              ...newRequest
+            });
+          });
+        }
+
+        // Start the 3-Minute Timer
+        setTimeout(() => {
+          Request.getById(requestId, (err, request) => {
+            if (request && request.status === 'pending') {
+              // Send timeout message ONLY to the original requester
+              // Use String() for reliable room naming
+              io.to(String(req.user.id)).emit('request-timeout', {
+                message: 'No volunteer is accepting the response.'
+              });
+            }
+          });
+        }, 180000); // 3 minutes
+      });
+
+      // Send the final HTTP response
+      res.status(201).json({ message: "Request created successfully", requestId: requestId });
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -78,21 +98,18 @@ const createRequest = (req, res) => {
 
 // Get all requests
 const getNearbyRequests = (req, res) => {
-  const { lat, lon } = req.query; // Get coordinates from the request URL
-  const radius = 5; // Search radius in kilometers
+  const { lat, lon } = req.query; 
+  const radius = 5; 
 
-  // Validate that coordinates were provided
   if (!lat || !lon) {
     return res.status(400).json({ message: 'Latitude and longitude are required' });
   }
 
-  // Call the findNearby function in the model
   Request.findNearby(parseFloat(lat), parseFloat(lon), radius, (err, requests) => {
     if (err) {
       console.error("Database error:", err);
       return res.status(500).json({ message: 'Server Error' });
     }
-    // Send the found requests back to the frontend
     res.json(requests);
   });
 };
