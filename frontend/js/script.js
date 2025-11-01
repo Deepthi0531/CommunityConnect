@@ -45,11 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     localStorage.setItem('token', data.token);
                     alert('Login successful!');
-<<<<<<< HEAD
-                   window.location.href = data.redirectUrl || 'http://localhost:5000/index.html';
-=======
-                    window.location.href = '/dashboard.html'; // Both users and volunteers go to the dashboard
->>>>>>> upstream/main
+
+                   window.location.href = data.redirectUrl || '/dashboard.html';
+
+                   
                 } else {
                     if (loginErrorMessage) loginErrorMessage.textContent = data.message || 'Login failed.';
                 }
