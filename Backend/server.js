@@ -42,9 +42,27 @@ app.use(cors());
 app.use(helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "https://cdn.jsdelivr.net", "https://unpkg.com", "https://cdn.socket.io"],
+      scriptSrc: [
+        "'self'", 
+        "https://cdn.jsdelivr.net", 
+        "https://unpkg.com", 
+        "https://cdn.socket.io", 
+        "'unsafe-inline'"
+      ],
       styleSrc: ["'self'", "https://cdn.jsdelivr.net", "https://unpkg.com", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https://*.tile.openstreetmap.org"],
+      imgSrc: [
+        "'self'", 
+        "data:", 
+        "https://*.tile.openstreetmap.org", 
+        "https://t4.ftcdn.net",
+        "https://unpkg.com" 
+      ],
+      connectSrc: [
+        "'self'", 
+        "https://cdn.jsdelivr.net", 
+        "https://cdn.socket.io",
+        "https://unpkg.com" 
+      ]
     },
 }));
 app.use(express.json());
@@ -58,7 +76,7 @@ app.use("/api/requests", requestRoutes);
 app.use('/api/volunteers', volunteerRoutes);
 app.use('/api/emergency', emergencyRoutes);
 
-// Catch-all route (MUST be after API routes)
+// Catch-all route (using the regex version that worked)
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
