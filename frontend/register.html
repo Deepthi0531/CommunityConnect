@@ -151,94 +151,120 @@
   </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
+ <script>
     (() => {
-      const map = L.map('map').setView([22.5726, 88.3639], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-      }).addTo(map);
+        // --- 1. SET DEFAULT LOCATION & INITIALIZE MAP ---
+        const defaultCoords = [22.5726, 88.3639]; // Kolkata
+        const map = L.map('map').setView(defaultCoords, 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
 
-      let marker;
+        let marker;
 
-      map.on('click', function (e) {
-        if (marker) map.removeLayer(marker);
+        // --- 2. HELPER FUNCTION TO SET MARKER & UPDATE FIELDS ---
+        function setLocation(lat, lng) {
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            marker = L.marker([lat, lng]).addTo(map);
+            
+            // Set hidden input values for the form
+            document.getElementById('latitude').value = lat.toFixed(6);
+            document.getElementById('longitude').value = lng.toFixed(6);
 
-        marker = L.marker(e.latlng).addTo(map);
-
-        // Set hidden input values to submit with form
-        document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
-        document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
-
-        // Set readonly display inputs
-        document.getElementById('display-latitude').value = e.latlng.lat.toFixed(6);
-        document.getElementById('display-longitude').value = e.latlng.lng.toFixed(6);
-
-        // Clear error if any on location selection
-        document.getElementById('error-message').textContent = '';
-      });
-
-      const form = document.getElementById('register-form');
-      const loadingOverlay = document.getElementById('loading');
-      const errorMessage = document.getElementById('error-message');
-
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        // Clear previous errors
-        errorMessage.textContent = '';
-
-        // Validate form fields with HTML5 constraint validation
-        if (!form.checkValidity()) {
-          form.classList.add('was-validated');
-          return;
+            // Set readonly display inputs
+            document.getElementById('display-latitude').value = lat.toFixed(6);
+            document.getElementById('display-longitude').value = lat.toFixed(6);
+            
+            // Clear location error
+            document.getElementById('error-message').textContent = '';
         }
 
-        // Validate location fields explicitly
-        const latVal = document.getElementById('latitude').value.trim();
-        const lonVal = document.getElementById('longitude').value.trim();
-
-        if (!latVal || !lonVal || isNaN(parseFloat(latVal)) || isNaN(parseFloat(lonVal))) {
-          errorMessage.textContent = 'Please select a valid location on the map.';
-          return;
+        // --- 3. TRY TO GET LIVE LOCATION ---
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // SUCCESS: Center map and set marker to live location
+                    const liveLat = position.coords.latitude;
+                    const liveLng = position.coords.longitude;
+                    map.setView([liveLat, liveLng], 13);
+                    setLocation(liveLat, liveLng);
+                },
+                () => {
+                    // FAILURE (or user denied): Place marker at the default location
+                    console.warn('Geolocation failed. Defaulting to Kolkata.');
+                    setLocation(defaultCoords[0], defaultCoords[1]);
+                }
+            );
+        } else {
+            // Geolocation not supported: Place marker at the default location
+            console.warn('Geolocation not supported by this browser.');
+            setLocation(defaultCoords[0], defaultCoords[1]);
         }
 
-        // Prepare payload including phone
-        const payload = {
-          name: document.getElementById('name').value.trim(),
-          email: document.getElementById('email').value.trim(),
-          role: document.getElementById('role').value,
-          password: document.getElementById('password').value,
-          phone: document.getElementById('phone').value.trim(),
-          latitude: parseFloat(latVal),
-          longitude: parseFloat(lonVal),
-        };
+        // --- 4. ALLOW USER TO CHANGE LOCATION BY CLICKING ---
+        map.on('click', function (e) {
+            setLocation(e.latlng.lat, e.latlng.lng);
+        });
 
-        try {
-          loadingOverlay.style.display = 'flex';
+        // --- 5. YOUR EXISTING FORM SUBMISSION LOGIC (UNCHANGED) ---
+        const form = document.getElementById('register-form');
+        const loadingOverlay = document.getElementById('loading');
+        const errorMessage = document.getElementById('error-message');
 
-          const response = await fetch('http://localhost:5000/api/users/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMessage.textContent = ''; // Clear previous errors
 
-          const data = await response.json();
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
 
-          loadingOverlay.style.display = 'none';
+            const latVal = document.getElementById('latitude').value.trim();
+            const lonVal = document.getElementById('longitude').value.trim();
 
-          if (response.ok) {
-            alert('Registration successful!');
-            window.location.href = 'login.html';
-          } else {
-            errorMessage.textContent = data.message || 'Registration failed.';
-          }
-        } catch (error) {
-          loadingOverlay.style.display = 'none';
-          errorMessage.textContent = 'Server error, please try again later.';
-          console.error('Registration error:', error);
-        }
-      });
+            if (!latVal || !lonVal || isNaN(parseFloat(latVal)) || isNaN(parseFloat(lonVal))) {
+                errorMessage.textContent = 'Please select a valid location on the map.';
+                return;
+            }
+
+            const payload = {
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                role: document.getElementById('role').value,
+                password: document.getElementById('password').value,
+                phone: document.getElementById('phone').value.trim(),
+                latitude: parseFloat(latVal),
+                longitude: parseFloat(lonVal),
+            };
+
+            try {
+                loadingOverlay.style.display = 'flex';
+
+                const response = await fetch('http://localhost:5000/api/users/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await response.json();
+                loadingOverlay.style.display = 'none';
+
+                if (response.ok) {
+                    alert('Registration successful!');
+                    window.location.href = 'login.html';
+                } else {
+                    errorMessage.textContent = data.message || 'Registration failed.';
+                }
+            } catch (error) {
+                loadingOverlay.style.display = 'none';
+                errorMessage.textContent = 'Server error, please try again later.';
+                console.error('Registration error:', error);
+            }
+        });
     })();
-  </script>
+</script>
 </body>
 </html>
