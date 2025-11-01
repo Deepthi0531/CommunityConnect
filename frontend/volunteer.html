@@ -107,10 +107,10 @@
                 <label class="form-label required" for="password">Password</label>
                 <input class="form-control" id="password" name="password" type="password" required>
               </div>
-              <div class="col-md-6">
+              <!-- <div class="col-md-6">
                 <label class="form-label required" for="confirm_password">Confirm Password</label>
                 <input class="form-control" id="confirm_password" name="confirm_password" type="password" required>
-              </div>
+              </div> -->
 
               <div class="col-12">
                 <label class="form-label required" for="skills">Skills</label>
@@ -216,12 +216,12 @@
 
             // --- FIX 1: Get password values correctly ---
             const password = form.password.value;
-            const confirmPassword = form.confirm_password.value;
+            // const confirmPassword = form.confirm_password.value;
 
-            if (password !== confirmPassword) {
-                showAlert("Passwords do not match.", "danger");
-                return;
-            }
+            // if (password !== confirmPassword) {
+            //     showAlert("Passwords do not match.", "danger");
+            //     return;
+            // }
 
             const payload = {
                 name: form.name.value.trim(),
