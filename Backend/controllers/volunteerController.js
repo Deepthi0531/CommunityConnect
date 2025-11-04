@@ -50,31 +50,27 @@ const loginVolunteer = (req, res) => {
         return res.status(400).json({ message: 'Please provide email and password' });
     }
 
-    // Use the findOneByEmail function you already have in your model
     Volunteer.findOneByEmail(email, (err, volunteer) => {
         if (err || !volunteer) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // We must compare the password
-        // IMPORTANT: This assumes your volunteer registration is hashing passwords.
-        // If it's not, you must add hashing to your registerVolunteer function.
         bcrypt.compare(password, volunteer.password, (err, isMatch) => {
             if (err || !isMatch) {
                 return res.status(401).json({ message: 'Invalid credentials' });
             }
 
-            // Create a token (You can add more info to the payload)
+            // --- THIS IS THE CRITICAL PART ---
+            // The token MUST include the role
             const token = jwt.sign({
                 id: volunteer.id, 
                 name: volunteer.name, 
                 email: volunteer.email,
-                role: 'volunteer' // Good to add a role
+                role: 'volunteer' 
             }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '30d' });
             
             res.json({ token });
         });
     });
 };
-
 module.exports = { registerVolunteer,loginVolunteer };

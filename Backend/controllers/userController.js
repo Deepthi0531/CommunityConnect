@@ -129,7 +129,8 @@ bcrypt.hash(adminPassword, 10)
         id: user.id,
         name: user.name,
         email: user.email,
-        profile_image_url: user.profile_image_url
+        profile_image_url: user.profile_image_url,
+        role:'user'
       }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '30d' });
       res.json({
         _id: user.id,

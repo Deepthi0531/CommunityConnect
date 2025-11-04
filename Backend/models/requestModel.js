@@ -25,14 +25,6 @@ const Request = {
   },
 
   /**
-   * @desc    FOR ADMINS: Get ALL requests from the database.
-   */
-  getAll: (callback) => {
-    const sql = "SELECT * FROM requests ORDER BY created_at DESC";
-    db.query(sql, callback);
-  },
-
-  /**
    * @desc    Get a single request by its ID.
    */
   getById: (id, callback) => {
@@ -58,6 +50,34 @@ const Request = {
     const sql = "DELETE FROM requests WHERE id = ?";
     db.query(sql, [id], callback);
   },
+  
+  /**
+   * @desc    Assigns a volunteer to a request and updates its status.
+   */
+  assignVolunteer: (requestId, volunteerId, callback) => {
+    const sql = "UPDATE requests SET volunteer_id = ?, status = 'approved' WHERE id = ? AND status = 'pending'";
+    db.query(sql, [volunteerId, requestId], callback);
+  },
+
+  /**
+   * @desc    Gets all details for a specific request (request, user, and volunteer).
+   */
+  getWithDetails: (requestId, callback) => {
+    const sql = `
+        SELECT
+        r.*,
+        u.id as user_id, u.name as user_name, u.phone as user_phone, u.latitude as user_lat, u.longitude as user_lng,
+        v.id as vol_id, v.name as vol_name, v.phone as vol_phone, v.latitude as vol_lat, v.longitude as vol_lng
+        FROM requests r
+        JOIN users u ON r.user_id = u.id
+        LEFT JOIN volunteers v ON r.volunteer_id = v.id
+        WHERE r.id = ?
+    `;
+    db.query(sql, [requestId], (err, results) => {
+        if (err) return callback(err, null);
+        callback(null, results[0]);
+    });
+  }
 };
 
 module.exports = Request;

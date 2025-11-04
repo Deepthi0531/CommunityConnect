@@ -21,5 +21,6 @@ router.get("/", requestController.getNearbyRequests);
 router.get("/:id", requestController.getRequestById);
 router.put("/:id", protect, requestController.updateRequest);
 router.delete("/:id", protect, requestController.deleteRequest);
+router.get("/details/:id", protect, requestController.getRequestDetails);
 
 module.exports = router;

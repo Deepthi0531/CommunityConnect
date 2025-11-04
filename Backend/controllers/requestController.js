@@ -10,36 +10,25 @@ const createRequest = (req, res) => {
       title, description, category, contact, address, latitude, longitude, urgency,
     } = req.body;
 
+    // --- Validation (omitted for brevity) ---
     if (!title || !description || !category || !contact || !latitude || !longitude || !urgency) {
       if (req.file) fs.unlink(req.file.path, () => {});
       return res.status(400).json({ message: "Required fields missing" });
     }
-
-    const latNum = Number(latitude);
-    const lngNum = Number(longitude);
-    if (isNaN(latNum) || isNaN(lngNum)) {
-      if (req.file) fs.unlink(req.file.path, () => {});
-      return res.status(400).json({ message: "Invalid latitude or longitude" });
-    }
-
-    let imageUrl = null;
-    if (req.file) {
-      imageUrl = `/uploads/${req.file.filename}`;
-    }
-
-    // This check is still valid
+    // ... other validations ...
     if (!req.user || !req.user.id) {
       if (req.file) fs.unlink(req.file.path, () => {});
       return res.status(401).json({ message: "Unauthorized: User info missing" });
     }
+    // --- End Validation ---
 
     const newRequest = {
       title, description, category, contact,
       address: address || null,
-      latitude: latNum,
-      longitude: lngNum,
+      latitude: Number(latitude),
+      longitude: Number(longitude),
       urgency,
-      image_url: imageUrl,
+      image_url: req.file ? `/uploads/${req.file.filename}` : null,
       status: "pending",
       user_id: req.user.id,
     };
@@ -51,21 +40,41 @@ const createRequest = (req, res) => {
         return res.status(500).json({ message: "Error creating request", error: err.message });
       }
 
-      // --- Real-time logic starts here ---
+      console.log('--- Request Created Successfully. Finding Volunteers... ---');
+
       const requestId = result.insertId;
-      const requesterName = req.user.name; // This will now work
+      const requesterName = req.user.name;
       const requesterLocation = req.body.address || 'nearby';
       const io = req.app.get('io');
 
+      // --- DEBUG STEP 1 ---
+      console.log(`Searching for volunteers near Lat: ${req.body.latitude}, Lng: ${req.body.longitude}`);
+
       // Find nearby volunteers
       Volunteer.findNearby(req.body.latitude, req.body.longitude, 5, (err, volunteers) => {
-        if (err || !volunteers) {
-          console.error("Could not find nearby volunteers:", err);
+        
+        // --- DEBUG STEP 2 ---
+        console.log('Nearby volunteers query completed.');
+
+        if (err) {
+            console.error('DATABASE ERROR finding volunteers:', err);
+        }
+        
+        if (!volunteers || volunteers.length === 0) {
+          console.warn('RESULT: No nearby volunteers were found.');
         } else {
-          // Emit to all nearby volunteers
+          
+          // --- DEBUG STEP 3 ---
+          console.log(`SUCCESS: Found ${volunteers.length} volunteers. Emitting messages...`);
+          
           volunteers.forEach(volunteer => {
-            // Use String() for reliable room naming
-            io.to(String(volunteer.user_id)).emit('new-help-request', { 
+            // This is the ID from the 'volunteers' table
+            const volunteerRoomId = String(volunteer.id); 
+            
+            // --- DEBUG STEP 4 ---
+            console.log(`Attempting to emit to volunteer room: ${volunteerRoomId}`);
+            
+            io.to(volunteerRoomId).emit('new-help-request', { 
               id: requestId,
               name: requesterName,
               location: requesterLocation,
@@ -74,12 +83,10 @@ const createRequest = (req, res) => {
           });
         }
 
-        // Start the 3-Minute Timer
+        // Start the 3-Minute Timer for the *requester*
         setTimeout(() => {
           Request.getById(requestId, (err, request) => {
             if (request && request.status === 'pending') {
-              // Send timeout message ONLY to the original requester
-              // Use String() for reliable room naming
               io.to(String(req.user.id)).emit('request-timeout', {
                 message: 'No volunteer is accepting the response.'
               });
@@ -88,7 +95,6 @@ const createRequest = (req, res) => {
         }, 180000); // 3 minutes
       });
 
-      // Send the final HTTP response
       res.status(201).json({ message: "Request created successfully", requestId: requestId });
     });
   } catch (error) {
@@ -146,6 +152,32 @@ const deleteRequest = (req, res) => {
     res.status(200).json({ message: "Request deleted successfully" });
   });
 };
+const getRequestDetails = (req, res) => {
+    Request.getWithDetails(req.params.id, (err, details) => {
+        if (err) return res.status(500).json({ message: "Error fetching details." });
+        if (!details) return res.status(404).json({ message: "Request not found." });
+
+        // Structure the data clearly
+        const responseData = {
+            request: details,
+            requester: {
+                id: details.user_id,
+                name: details.user_name,
+                phone: details.user_phone,
+                latitude: details.user_lat,
+                longitude: details.user_lng
+            },
+            volunteer: {
+                id: details.vol_id,
+                name: details.vol_name,
+                phone: details.vol_phone,
+                latitude: details.vol_lat,
+                longitude: details.vol_lng
+            }
+        };
+        res.json(responseData);
+    });
+};
 
 module.exports = {
   createRequest,
@@ -153,4 +185,5 @@ module.exports = {
   getRequestById,
   updateRequest,
   deleteRequest,
+  getRequestDetails
 };

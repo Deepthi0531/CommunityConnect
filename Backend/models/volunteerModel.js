@@ -1,3 +1,4 @@
+// In Backend/models/volunteerModel.js
 const db = require("../config/db");
 
 const Volunteer = {
@@ -36,17 +37,25 @@ const Volunteer = {
     });
   },
 
+  // Find nearby volunteers
   findNearby: (lat, lon, radius, callback) => {
-    // Finds volunteers within a radius, using the Haversine formula
-    // Assumes volunteers have a 'latitude', 'longitude', and 'user_id'
     const sql = `
       SELECT *, ( 6371 * acos( cos( radians(?) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitude ) ) ) ) AS distance
       FROM volunteers
-      WHERE availability = 'Available' -- Only find available volunteers
+      WHERE availability = 'yes'
       HAVING distance < ?
       ORDER BY distance;
     `;
     db.query(sql, [lat, lon, lat, radius], callback);
+  },
+
+  // Find a single volunteer by their ID
+  findById: (id, callback) => {
+    const sql = "SELECT id, name, phone, latitude, longitude FROM volunteers WHERE id = ?";
+    db.query(sql, [id], (err, results) => {
+        if (err) return callback(err, null);
+        callback(null, results[0]);
+    });
   }
 };
 
