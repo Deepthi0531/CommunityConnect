@@ -85,3 +85,25 @@ async function sendEmergencyAlert(token, emergencyType, latitude, longitude) {
     alert('Server error sending alert.');
   }
 }
+const express = require('express');
+const app = express();
+
+// Other middleware and routes here...
+
+// This is your TwiML endpoint for Twilio calls
+app.post('/emergency-call.xml', (req, res) => {
+  res.type('text/xml');
+  res.send(`
+    <Response>
+      <Say voice="alice" language="en-US">
+        This is an emergency call from CommunityConnect. Please respond if you are available to help.
+      </Say>
+    </Response>
+  `);
+});
+
+// Start the server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

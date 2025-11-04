@@ -1,10 +1,20 @@
+require('dotenv').config();
+console.log("TWILIO_ACCOUNT_SID:", process.env.TWILIO_ACCOUNT_SID);
+console.log("TWILIO_AUTH_TOKEN:", process.env.TWILIO_AUTH_TOKEN ? "set" : "NOT SET");
+console.log("TWILIO_PHONE_NUMBER:", process.env.TWILIO_PHONE_NUMBER);
+
+
 const Emergency = require('../models/emergencyModel');
 const twilio = require('twilio');
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID; 
 const authToken = process.env.TWILIO_AUTH_TOKEN; 
 const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
+
+
 const client = twilio(accountSid, authToken);
+
+
 
 // Utility function to validate E.164 phone number format (basic)
 const isValidPhone = (phone) => {
@@ -55,6 +65,7 @@ const alertEmergency = async (req, res) => {
         console.warn(`Skipping user ${user.id} due to invalid or missing phone: ${user.phone}`);
       }
     }
+    
 
     // Send SMS and optionally calls to nearby volunteers
     for (const volunteer of nearbyVolunteers) {
@@ -65,11 +76,11 @@ const alertEmergency = async (req, res) => {
             from: twilioNumber,
             to: volunteer.phone,
           });
-
+          
           // Place automated call for critical emergencies if enabled
           if (['Fire', 'Rescue'].includes(emergencyType)) {
             await client.calls.create({
-              url: 'https://your-twiml-url.com/emergency-call.xml', // TwiML instructions URL
+              url: 'https://handler.twilio.com/twiml/EH4222d2d299bd5649bda7509c9b4d4dd0', // TwiML instructions URL
               from: twilioNumber,
               to: volunteer.phone,
             });
@@ -81,6 +92,7 @@ const alertEmergency = async (req, res) => {
         console.warn(`Skipping volunteer ${volunteer.id} due to invalid or missing phone: ${volunteer.phone}`);
       }
     }
+    
 
     res.json({
       message: 'Emergency alerts sent',

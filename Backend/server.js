@@ -10,6 +10,8 @@ const userRoutes = require('./routes/userRoutes');
 const requestRoutes = require('./routes/requests');
 const volunteerRoutes = require('./routes/volunteer');
 const emergencyRoutes = require('./routes/emergencyRoutes');
+const db = require("./config/db");
+
 
 require("dotenv").config();
 

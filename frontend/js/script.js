@@ -45,7 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     localStorage.setItem('token', data.token);
                     alert('Login successful!');
-                    window.location.href = '/dashboard.html'; // Both users and volunteers go to the dashboard
+
+                   window.location.href = data.redirectUrl || '/dashboard.html';
+
+                   
                 } else {
                     if (loginErrorMessage) loginErrorMessage.textContent = data.message || 'Login failed.';
                 }
