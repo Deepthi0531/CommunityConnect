@@ -394,9 +394,19 @@ document.addEventListener('DOMContentLoaded', () => {
         alert("Sorry, no volunteer is accepting your request at this time.");
     });
 
-    socket.on('your-request-accepted', (data) => {
-        alert(`A volunteer has accepted your request!`);
-    });
+   socket.on('your-request-accepted', (data) => {
+                console.log("Server sent 'your-request-accepted' with data:", data);
+                alert(` A volunteer has accepted your request!`);
+                
+                // --- THIS IS THE FIX ---
+                // This checks the data and redirects to the new volunteer details page
+                if (data && data.requestId) {
+                    window.location.href = `/volunteer-details.html?id=${data.requestId}`;
+                } else {
+                    console.error("Redirect failed: 'requestId' was missing from the server data.");
+                    alert("A match was found, but there was an error showing the details.");
+                }
+            });
 });
   </script>
 </body>

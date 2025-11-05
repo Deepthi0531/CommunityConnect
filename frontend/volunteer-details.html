@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Volunteer Details - CommunityConnect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: 400px; border-radius: 0.5rem; }
+        .profile-picture-navbar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="index.html">
+                <img src="favicon.ico" alt="Logo" style="width: 30px; height: 30px; margin-right: 10px;">
+                CommunityConnect
+            </a>
+            <div class="d-flex align-items-center ms-auto">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                </ul>
+                <div class="dropdown ms-3">
+                    <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg" id="navbarProfileImage" class="profile-picture-navbar" alt="User Profile">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="profile.html">Profile</a></li>
+                        <li><a class="dropdown-item" href="settings.html">Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" id="logout-button">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <h2 class="mb-4">A Volunteer is on the way!</h2>
+        <div class="row g-4">
+            
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-header"><h3>Volunteer Contact Details</h3></div>
+                    <div class="card-body" id="contact-details">
+                        <p>Loading...</p>
+                    </div>
+                </div>
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header"><h3>Your Request Details</h3></div>
+                    <div class="card-body" id="request-info">
+                        <p>Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login.html';
+        return;
+    }
+
+    // Add logout functionality
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        });
+    }
+
+    const contactDiv = document.getElementById('contact-details');
+    const requestInfoDiv = document.getElementById('request-info');
+    const mapDiv = document.getElementById('map');
+    
+    // Get the request ID from the URL
+    const requestId = new URLSearchParams(window.location.search).get('id');
+    if (!requestId) {
+        contactDiv.innerHTML = '<p class="text-danger">Error: No request ID found.</p>';
+        return;
+    }
+
+    // Fetch the details for this matched request
+    async function fetchMatchDetails() {
+        try {
+            const response = await fetch(`/api/requests/details/${requestId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch match details.');
+            
+            const data = await response.json();
+            
+            // Populate the volunteer's contact card
+            contactDiv.innerHTML = `
+                <h3>${data.volunteer.name}</h3>
+                <p><strong>Contact:</strong> ${data.volunteer.phone || 'Not provided'}</p>
+                <p>Your request has been approved and this volunteer is notified.</p>
+            `;
+
+            // Populate the request info
+            requestInfoDiv.innerHTML = `
+                <h5>${data.request.title}</h5>
+                <p><strong>Category:</strong> ${data.request.category}</p>
+                <p><strong>Status:</strong> <span class="badge bg-success">${data.request.status}</span></p>
+                <p><strong>Address:</strong> ${data.request.address || 'N/A'}</p>
+            `;
+
+            // Initialize the map centered on the volunteer's location
+        } catch (error) {
+            console.error(error);
+            contactDiv.innerHTML = `<p class="text-danger">${error.message}</p>`;
+        }
+    }
+
+    fetchMatchDetails();
+});
+</script>
+</body>
+</html>

@@ -94,9 +94,8 @@
         </div>
     </div>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
     // --- 1. DEFINE YOUR FUNCTIONS ---
 
     function populateUserProfile(token) {
@@ -202,18 +201,8 @@
             });
 
             // Listen for updates on your *own* created request
-            socket.on('request-timeout', (data) => {
-                alert("Sorry, no volunteer is accepting your request at this time.");
-            });
-
             socket.on('your-request-accepted', (data) => {
-                alert(`A volunteer has accepted your request!`);
-                if (data && data.requestId) {
-                    window.location.href = `/request-details.html?id=${data.requestId}`;
-                } else {
-                    console.error("Redirect failed: requestId was not in the event data.");
-                    alert("Match found, but there was an error redirecting. Please check your dashboard.");
-                }
+                alert(`🥳 A volunteer has accepted your request!`);               
             });
 
         } catch (error) {

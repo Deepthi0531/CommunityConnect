@@ -59,6 +59,7 @@ io.on('connection', (socket) => {
                     // 4. Notify the original user that their request was accepted
                     io.to(originalUserId).emit('your-request-accepted', {
                         requestId: requestId,
+                        volunteerId: volunteerId,
                         volunteer: {
                             name: volunteer.name,
                             phone: volunteer.phone,

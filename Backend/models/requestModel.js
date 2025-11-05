@@ -66,7 +66,7 @@ const Request = {
     const sql = `
         SELECT
         r.*,
-        u.id as user_id, u.name as user_name, u.phone as user_phone, u.latitude as user_lat, u.longitude as user_lng,
+        u.id as user_id, u.name as user_name, u.phone as user_phone, r.latitude as user_lat, r.longitude as user_lng,
         v.id as vol_id, v.name as vol_name, v.phone as vol_phone, v.latitude as vol_lat, v.longitude as vol_lng
         FROM requests r
         JOIN users u ON r.user_id = u.id
