@@ -150,17 +150,16 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
- <script>
+ <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
     (() => {
-        // --- 1. SET DEFAULT LOCATION & INITIALIZE MAP ---
         const defaultCoords = [22.5726, 88.3639]; // Kolkata
-        const map = L.map('map').setView(defaultCoords, 13);
+        const map = L.map('map'); // 1. Initialize map
+        let marker;
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
         }).addTo(map);
-
-        let marker;
 
         // --- 2. HELPER FUNCTION TO SET MARKER & UPDATE FIELDS ---
         function setLocation(lat, lng) {
@@ -177,38 +176,39 @@
             document.getElementById('display-latitude').value = lat.toFixed(6);
             document.getElementById('display-longitude').value = lat.toFixed(6);
             
-            // Clear location error
             document.getElementById('error-message').textContent = '';
         }
 
-        // --- 3. TRY TO GET LIVE LOCATION ---
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    // SUCCESS: Center map and set marker to live location
-                    const liveLat = position.coords.latitude;
-                    const liveLng = position.coords.longitude;
-                    map.setView([liveLat, liveLng], 13);
-                    setLocation(liveLat, liveLng);
-                },
-                () => {
-                    // FAILURE (or user denied): Place marker at the default location
-                    console.warn('Geolocation failed. Defaulting to Kolkata.');
-                    setLocation(defaultCoords[0], defaultCoords[1]);
-                }
-            );
-        } else {
-            // Geolocation not supported: Place marker at the default location
-            console.warn('Geolocation not supported by this browser.');
+        // --- 3. HELPER FUNCTION TO HANDLE LOCATION SUCCESS ---
+        function onLocationFound(e) {
+            const liveLat = e.coords.latitude;
+            const liveLng = e.coords.longitude;
+            map.setView([liveLat, liveLng], 13);
+            setLocation(liveLat, liveLng);
+        }
+
+        // --- 4. HELPER FUNCTION TO HANDLE LOCATION ERROR ---
+        function onLocationError() {
+            console.warn('Geolocation failed. Defaulting to Kolkata.');
+            map.setView(defaultCoords, 13);
             setLocation(defaultCoords[0], defaultCoords[1]);
         }
 
-        // --- 4. ALLOW USER TO CHANGE LOCATION BY CLICKING ---
+        // --- 5. TRY TO GET LIVE LOCATION ---
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(onLocationFound, onLocationError);
+        } else {
+            // Geolocation not supported
+            onLocationError();
+        }
+
+        // --- 6. ALLOW USER TO CHANGE LOCATION BY CLICKING ---
         map.on('click', function (e) {
+            map.setView(e.latlng, map.getZoom()); // Center map where user clicked
             setLocation(e.latlng.lat, e.latlng.lng);
         });
 
-        // --- 5. YOUR EXISTING FORM SUBMISSION LOGIC (UNCHANGED) ---
+        // --- 7. FORM SUBMISSION LOGIC (UNCHANGED) ---
         const form = document.getElementById('register-form');
         const loadingOverlay = document.getElementById('loading');
         const errorMessage = document.getElementById('error-message');
