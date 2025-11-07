@@ -1,20 +1,14 @@
-require('dotenv').config();
-console.log("TWILIO_ACCOUNT_SID:", process.env.TWILIO_ACCOUNT_SID);
-console.log("TWILIO_AUTH_TOKEN:", process.env.TWILIO_AUTH_TOKEN ? "set" : "NOT SET");
-console.log("TWILIO_PHONE_NUMBER:", process.env.TWILIO_PHONE_NUMBER);
-
-
+// We no longer need dotenv here, as server.js handles it.
 const Emergency = require('../models/emergencyModel');
 const twilio = require('twilio');
 
+// The variables will be correctly loaded from process.env
 const accountSid = process.env.TWILIO_ACCOUNT_SID; 
 const authToken = process.env.TWILIO_AUTH_TOKEN; 
 const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
 
-
+// Initialize the client (it will now have the correct credentials)
 const client = twilio(accountSid, authToken);
-
-
 
 // Utility function to validate E.164 phone number format (basic)
 const isValidPhone = (phone) => {
@@ -22,13 +16,11 @@ const isValidPhone = (phone) => {
 };
 
 // POST /api/emergency/alert
-// Body: { emergencyType, latitude, longitude }
 const alertEmergency = async (req, res) => {
   try {
     const userId = req.user.id; // from JWT auth middleware
     const { emergencyType, latitude, longitude } = req.body;
 
-    // Validate presence and types of latitude and longitude
     if (
       !emergencyType || 
       typeof latitude !== 'number' || isNaN(latitude) || 
@@ -37,16 +29,13 @@ const alertEmergency = async (req, res) => {
       return res.status(400).json({ message: 'Missing or invalid required fields' });
     }
 
-    // Debug logging input coordinates and emergency type
-    console.log(`Emergency alert received: type=${emergencyType}, lat=${latitude} (${typeof latitude}), lon=${longitude} (${typeof longitude})`);
+    console.log(`Emergency alert received: type=${emergencyType}, lat=${latitude}, lon=${longitude}`);
 
-    // Find nearby users and volunteers within 5km radius
     const nearbyUsers = await Emergency.findNearbyUsers(latitude, longitude, 5);
     const nearbyVolunteers = await Emergency.findNearbyVolunteers(latitude, longitude, 5);
 
     console.log(`Found ${nearbyUsers.length} nearby users and ${nearbyVolunteers.length} volunteers`);
 
-    // Compose SMS message
     const message = `Emergency Alert: ${emergencyType} reported nearby. Please respond if available.`;
 
     // Send SMS to nearby users
@@ -66,7 +55,6 @@ const alertEmergency = async (req, res) => {
       }
     }
     
-
     // Send SMS and optionally calls to nearby volunteers
     for (const volunteer of nearbyVolunteers) {
       if (volunteer.phone && isValidPhone(volunteer.phone)) {
@@ -77,10 +65,9 @@ const alertEmergency = async (req, res) => {
             to: volunteer.phone,
           });
           
-          // Place automated call for critical emergencies if enabled
           if (['Fire', 'Rescue'].includes(emergencyType)) {
             await client.calls.create({
-              url: 'https://handler.twilio.com/twiml/EH4222d2d299bd5649bda7509c9b4d4dd0', // TwiML instructions URL
+              url: 'https://handler.twilio.com/twiml/EH4222d2d299bd5649bda7509c9b4d4dd0',
               from: twilioNumber,
               to: volunteer.phone,
             });
@@ -93,7 +80,6 @@ const alertEmergency = async (req, res) => {
       }
     }
     
-
     res.json({
       message: 'Emergency alerts sent',
       nearbyUsersCount: nearbyUsers.length,

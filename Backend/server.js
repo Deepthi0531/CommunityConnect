@@ -1,3 +1,6 @@
+// --- THIS MUST BE THE VERY FIRST LINE ---
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -12,15 +15,15 @@ const volunteerRoutes = require('./routes/volunteer');
 const emergencyRoutes = require('./routes/emergencyRoutes');
 const db = require("./config/db");
 
-
 const Request = require('./models/requestModel');
 const Volunteer = require('./models/volunteerModel');
-
-require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
+
+// ... (rest of your server.js file is correct) ...
+// ... (io setup, middleware, API routes, etc.) ...
 
 const io = new Server(httpServer, {
     cors: {
@@ -41,22 +44,17 @@ io.on('connection', (socket) => {
     socket.on('request-accepted', (data) => {
         const { requestId, volunteerId } = data;
         
-        // 1. Assign volunteer to the request in the DB
         Request.assignVolunteer(requestId, volunteerId, (err, result) => {
             if (err || result.affectedRows === 0) {
                 console.error("Failed to assign volunteer:", err);
                 return;
             }
-
-            // 2. Get the request details (we need the original user's ID)
             Request.getById(requestId, (err, request) => {
                 if (err || !request) return;
                 const originalUserId = String(request.user_id);
-                // 3. Get the volunteer's details to send to the user
                 Volunteer.findById(volunteerId, (err, volunteer) => {
                     if (err || !volunteer) return;
                     
-                    // 4. Notify the original user that their request was accepted
                     io.to(originalUserId).emit('your-request-accepted', {
                         requestId: requestId,
                         volunteerId: volunteerId,
